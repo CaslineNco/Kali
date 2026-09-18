@@ -1,6 +1,6 @@
 import Database from '@tauri-apps/plugin-sql';
 import type { DayKey } from '@/lib/date';
-import { creditedMinutes, type BlockKind, type BlockStatus, type DaySummary, type TimeBlock } from './types';
+import { creditedMinutes, type BlockKind, type BlockStatus, type DaySummary, type Step, type TimeBlock } from './types';
 
 /** 新建时要填的字段；id / 时间戳由仓库生成。 */
 export interface NewBlock {
@@ -10,6 +10,7 @@ export interface NewBlock {
   endMin: number | null;
   plannedMin: number;
   note?: string;
+  steps?: Step[];
   /** 补记直接传 'confirmed'；排计划默认 'planned' */
   status?: BlockStatus;
 }
@@ -21,6 +22,7 @@ export interface BlockPatch {
   actualMin?: number | null;
   status?: BlockStatus;
   note?: string;
+  steps?: Step[];
   kind?: BlockKind;
   date?: DayKey;
 }
@@ -35,6 +37,20 @@ export interface Repo {
   restore(id: string): Promise<TimeBlock | null>;
   /** 开发/测试用：清掉所有数据 */
   clearAll(): Promise<void>;
+  /** 本地设置：API key 之类 */
+  getSetting(key: string): Promise<string | null>;
+  setSetting(key: string, value: string): Promise<void>;
+}
+
+/** steps 列是 JSON 文本；坏数据一律当空 */
+function parseSteps(raw: unknown): Step[] {
+  if (typeof raw !== 'string') return [];
+  try {
+    const v = JSON.parse(raw);
+    return Array.isArray(v) ? v.filter((x) => x && typeof x.text === 'string').map((x) => ({ text: x.text, done: !!x.done })) : [];
+  } catch {
+    return [];
+  }
 }
 
 /** 按天汇总已确认时长（格子墙用） */
@@ -65,6 +81,7 @@ interface Row {
   actual_min: number | null;
   status: BlockStatus;
   note: string;
+  steps: string;
   created_at: string;
   updated_at: string;
 }
@@ -79,12 +96,13 @@ const fromRow = (r: Row): TimeBlock => ({
   actualMin: r.actual_min,
   status: r.status,
   note: r.note,
+  steps: parseSteps(r.steps),
   createdAt: r.created_at,
   updatedAt: r.updated_at,
 });
 
 const COLS =
-  'id, date, kind, start_min, end_min, planned_min, actual_min, status, note, created_at, updated_at';
+  'id, date, kind, start_min, end_min, planned_min, actual_min, status, note, steps, created_at, updated_at';
 
 /** 字段名 → 列名，update 拼 SQL 用 */
 const COL_OF: Record<keyof BlockPatch, string> = {
@@ -94,9 +112,13 @@ const COL_OF: Record<keyof BlockPatch, string> = {
   actualMin: 'actual_min',
   status: 'status',
   note: 'note',
+  steps: 'steps',
   kind: 'kind',
   date: 'date',
 };
+
+/** patch 的值 → 列值：steps 要序列化 */
+const toCol = (k: keyof BlockPatch, v: unknown) => (k === 'steps' ? JSON.stringify(v ?? []) : v);
 
 class SqliteRepo implements Repo {
   private db: Database;
@@ -131,11 +153,12 @@ class SqliteRepo implements Repo {
       actualMin: b.status === 'confirmed' ? b.plannedMin : null,
       status: b.status ?? 'planned',
       note: b.note ?? '',
+      steps: b.steps ?? [],
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };
     await this.db.execute(
-      `INSERT INTO time_blocks (${COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+      `INSERT INTO time_blocks (${COLS}) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
       [
         block.id,
         block.date,
@@ -146,6 +169,7 @@ class SqliteRepo implements Repo {
         block.actualMin,
         block.status,
         block.note,
+        JSON.stringify(block.steps),
         block.createdAt,
         block.updatedAt,
       ],
@@ -157,7 +181,7 @@ class SqliteRepo implements Repo {
     const keys = Object.keys(patch) as (keyof BlockPatch)[];
     if (keys.length === 0) return this.get(id);
     const sets = keys.map((k, i) => `${COL_OF[k]} = $${i + 1}`);
-    const vals: unknown[] = keys.map((k) => patch[k]);
+    const vals: unknown[] = keys.map((k) => toCol(k, patch[k]));
     vals.push(nowIso(), id);
     await this.db.execute(
       `UPDATE time_blocks SET ${sets.join(', ')}, updated_at = $${vals.length - 1} WHERE id = $${vals.length} AND deleted_at IS NULL`,
@@ -182,6 +206,18 @@ class SqliteRepo implements Repo {
     await this.db.execute(`DELETE FROM time_blocks`);
   }
 
+  async getSetting(key: string) {
+    const rows = await this.db.select<{ value: string }[]>(`SELECT value FROM settings WHERE key = $1`, [key]);
+    return rows[0]?.value ?? null;
+  }
+
+  async setSetting(key: string, value: string) {
+    await this.db.execute(
+      `INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [key, value],
+    );
+  }
+
   private async get(id: string) {
     const rows = await this.db.select<Row[]>(
       `SELECT ${COLS} FROM time_blocks WHERE id = $1 AND deleted_at IS NULL`,
@@ -196,6 +232,15 @@ class SqliteRepo implements Repo {
 class MemoryRepo implements Repo {
   private rows = new Map<string, TimeBlock>();
   private trash = new Map<string, TimeBlock>();
+  private settings = new Map<string, string>();
+
+  async getSetting(key: string) {
+    return this.settings.get(key) ?? null;
+  }
+
+  async setSetting(key: string, value: string) {
+    this.settings.set(key, value);
+  }
 
   private sorted(filter: (b: TimeBlock) => boolean) {
     return [...this.rows.values()]
@@ -227,6 +272,7 @@ class MemoryRepo implements Repo {
       actualMin: b.status === 'confirmed' ? b.plannedMin : null,
       status: b.status ?? 'planned',
       note: b.note ?? '',
+      steps: b.steps ?? [],
       createdAt: nowIso(),
       updatedAt: nowIso(),
     };

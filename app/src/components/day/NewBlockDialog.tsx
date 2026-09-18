@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Dialog, KindToggle } from '@/components/ui/Dialog';
 import { DurationDial, TimeSteppers } from '@/components/ui/DurationDial';
 import { blocks } from '@/data/store';
-import type { BlockKind, TimeBlock } from '@/data/types';
+import type { BlockKind, Step, TimeBlock } from '@/data/types';
+import { StepsEditor } from './StepsEditor';
 import { fmtDateShort, fmtHm, fromKey, type DayKey } from '@/lib/date';
 
 export interface NewBlockDraft {
@@ -61,6 +62,7 @@ function NewBlockForm({
   );
   const end = start + duration;
   const [note, setNote] = useState(ex?.note ?? '');
+  const [steps, setSteps] = useState<Step[]>(ex?.steps ?? []);
   const [saving, setSaving] = useState(false);
 
   // 时间块不跨天：结束不能超过当天末尾
@@ -75,9 +77,9 @@ function NewBlockForm({
     setSaving(true);
     try {
       if (ex) {
-        await blocks.patch(ex.id, { kind, startMin: start, endMin: end, plannedMin: duration, note });
+        await blocks.patch(ex.id, { kind, startMin: start, endMin: end, plannedMin: duration, note, steps });
       } else {
-        await blocks.add({ date: draft.date, kind, startMin: start, endMin: end, plannedMin: duration, note });
+        await blocks.add({ date: draft.date, kind, startMin: start, endMin: end, plannedMin: duration, note, steps });
       }
       onClose();
     } finally {
@@ -117,6 +119,7 @@ function NewBlockForm({
           maxLength={80}
         />
       </label>
+      <StepsEditor steps={steps} onChange={setSteps} context={{ title: note, kind, minutes: duration }} />
       {!ex && <p className="form-hint">Saved as planned — you’ll be asked to confirm when it ends.</p>}
       <div className="form-actions">
         {ex && onDelete && (

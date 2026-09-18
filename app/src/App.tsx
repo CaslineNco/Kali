@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import { DayView } from './components/day/DayView';
 import { DevPanel } from './components/DevPanel';
+import { SettingsDialog } from './components/SettingsDialog';
 import { SpinningCounter } from './components/ui/SpinningCounter';
 import { YearWall } from './components/YearWall';
 import { useYearSummary } from './data/store';
@@ -26,6 +27,7 @@ function App() {
   const year = today.getFullYear();
   const { summary: data, blocks: all, error } = useYearSummary(year);
   const [view, setView] = useState<View>({ kind: 'wall' });
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // 悬浮窗点了某一行 → 跳到那天的日程视图
   useEffect(() => {
@@ -57,11 +59,16 @@ function App() {
     [all, todayKey, nowMin],
   );
 
-  const totalFocusMin = useMemo(() => {
-    let sum = 0;
-    for (const v of data.values()) sum += v.focus;
-    return sum;
+  const totals = useMemo(() => {
+    let focus = 0;
+    let fun = 0;
+    for (const v of data.values()) {
+      focus += v.focus;
+      fun += v.fun;
+    }
+    return { focus, fun };
   }, [data]);
+  const totalFocusMin = totals.focus;
 
   return (
     <main className="app">
@@ -83,7 +90,7 @@ function App() {
                     <span className="wall-hours">
                       <SpinningCounter value={totalFocusMin / 60} cell={28} />h
                     </span>{' '}
-                    focused · leisure tracked separately
+                    focused · <span className="wall-leisure">{Math.round(totals.fun / 60)}h</span> leisure
                   </span>
                 </h1>
                 {pendingCount > 0 && (
@@ -105,7 +112,7 @@ function App() {
               />
               <p className="wall-hint">Click a day to open it · drag across days to total a span</p>
             </div>
-            <button type="button" className="gear" aria-label="Settings" title="Settings (stage 7)">
+            <button type="button" className="gear" aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)}>
               <Settings size={16} />
             </button>
           </motion.div>
@@ -127,6 +134,7 @@ function App() {
         )}
       </AnimatePresence>
 
+      <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       {error && (
         <div className="db-error" role="alert">
           Couldn’t open the database: {error}. Fix the problem and restart the app.

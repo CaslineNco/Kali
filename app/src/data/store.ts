@@ -166,6 +166,38 @@ export const blocks = {
   get: findById,
 };
 
+/** 本地设置（API key 等）：读一次进内存，写了就通知 */
+const settingsCache = new Map<string, string | null>();
+export const settings = {
+  async get(key: string) {
+    if (!settingsCache.has(key)) settingsCache.set(key, await (await getRepo()).getSetting(key));
+    return settingsCache.get(key) ?? null;
+  },
+  async set(key: string, value: string) {
+    await (await getRepo()).setSetting(key, value);
+    settingsCache.set(key, value);
+    notify();
+  },
+  peek(key: string) {
+    return settingsCache.get(key) ?? null;
+  },
+};
+
+export function useSetting(key: string) {
+  const v = useVersion();
+  const [value, setValue] = useState<string | null>(() => settings.peek(key));
+  useEffect(() => {
+    let alive = true;
+    void settings.get(key).then((x) => {
+      if (alive) setValue(x);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [key, v]);
+  return value;
+}
+
 function useVersion() {
   const [v, setV] = useState(version);
   useEffect(() => {

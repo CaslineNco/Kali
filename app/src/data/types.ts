@@ -11,6 +11,12 @@ export type BlockStatus = 'planned' | 'confirmed' | 'skipped';
 
 export type DisplayStatus = BlockStatus | 'pending';
 
+/** 拆解步骤里的一步 */
+export interface Step {
+  text: string;
+  done: boolean;
+}
+
 export interface TimeBlock {
   id: string;
   date: DayKey;
@@ -23,6 +29,8 @@ export interface TimeBlock {
   actualMin: number | null;
   status: BlockStatus;
   note: string;
+  /** 拆解步骤（可为空数组）——不影响时长和格子颜色，只是"怎么开始"的清单 */
+  steps: Step[];
   createdAt: string;
   updatedAt: string;
 }

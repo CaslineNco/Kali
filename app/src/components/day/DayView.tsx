@@ -452,6 +452,7 @@ function Block({
       {density === 'full' && (
         <div className="blk-sub">
           {range} · {kindLabel(b)}
+          {b.steps.length > 0 ? ` · ${b.steps.filter((s) => s.done).length}/${b.steps.length} steps` : ''}
           {status === 'confirmed' && b.actualMin !== null && b.actualMin !== b.plannedMin
             ? ` · actual ${fmtMinutes(b.actualMin)}`
             : ''}

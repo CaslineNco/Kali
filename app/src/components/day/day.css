@@ -656,6 +656,136 @@
   border-color: var(--coral);
 }
 
+/* ---------- 拆解步骤 ---------- */
+.steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.steps-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.steps-ai {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--amber) 10%, transparent);
+  color: var(--amber);
+  font-size: var(--fs-sub);
+  cursor: pointer;
+}
+
+.steps-ai:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--amber) 18%, transparent);
+}
+
+.steps-ai:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.steps-nokey {
+  font-size: var(--fs-cap);
+  line-height: var(--lh-cap);
+  color: var(--muted);
+  text-align: right;
+}
+
+.steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.steps-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.steps-item input[type='checkbox'] {
+  accent-color: var(--amber);
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.steps-text {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: var(--fs-sub);
+  color: var(--text);
+  background: none;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  padding: 4px 0;
+  outline: none;
+}
+
+.steps-text:focus {
+  border-bottom-color: var(--border);
+}
+
+.steps-item[data-done] .steps-text {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.steps-x {
+  display: inline-flex;
+  padding: 3px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.steps-x:hover:not(:disabled) {
+  color: var(--text);
+}
+
+.steps-x:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.steps-add {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.steps-add input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: var(--fs-sub);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-btn);
+  padding: 6px 10px;
+  outline: none;
+}
+
+.steps-add input:focus {
+  border-color: var(--amber);
+}
+
 /* 专注/娱乐 二选一 */
 .seg {
   display: inline-flex;

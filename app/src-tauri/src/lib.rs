@@ -2,12 +2,20 @@ use tauri_plugin_sql::{Migration, MigrationKind};
 
 /// 数据库结构变更全部走这里，按 version 递增追加，永远不要改已经发布过的那条。
 fn migrations() -> Vec<Migration> {
-  vec![Migration {
-    version: 1,
-    description: "create time_blocks",
-    sql: include_str!("../migrations/0001_time_blocks.sql"),
-    kind: MigrationKind::Up,
-  }]
+  vec![
+    Migration {
+      version: 1,
+      description: "create time_blocks",
+      sql: include_str!("../migrations/0001_time_blocks.sql"),
+      kind: MigrationKind::Up,
+    },
+    Migration {
+      version: 2,
+      description: "steps column + settings table",
+      sql: include_str!("../migrations/0002_steps_settings.sql"),
+      kind: MigrationKind::Up,
+    },
+  ]
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]

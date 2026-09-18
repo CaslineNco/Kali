@@ -69,6 +69,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.wall-leisure {
+  color: var(--teal);
+  font-weight: 600;
+}
+
 .wall-hint {
   margin: 0;
   font-size: var(--fs-sub);

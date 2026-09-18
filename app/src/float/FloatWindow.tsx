@@ -62,10 +62,10 @@ export function FloatWindow() {
 
   const done = rows.filter((r) => r.st === 'confirmed').length;
   const open = rows.filter((r) => r.st === 'planned' || r.st === 'pending').length;
-  const focusMin = blocks.reduce(
-    (t, b) => t + (b.status === 'confirmed' && b.kind === 'focus' ? (b.actualMin ?? b.plannedMin) : 0),
-    0,
-  );
+  const sum = (kind: TimeBlock['kind']) =>
+    blocks.reduce((t, b) => t + (b.status === 'confirmed' && b.kind === kind ? (b.actualMin ?? b.plannedMin) : 0), 0);
+  const focusMin = sum('focus');
+  const funMin = sum('fun');
 
   const items: SwipeableListItem[] = rows.map(({ b, st, running, progress, status, actionable }) => ({
     id: b.id,
@@ -201,7 +201,9 @@ export function FloatWindow() {
               </motion.span>
             )}
           </AnimatePresence>
-          <span data-tauri-drag-region>Focus {fmtMinutes(focusMin)}</span>
+          <span data-tauri-drag-region>
+            Focus {fmtMinutes(focusMin)} · Leisure {fmtMinutes(funMin)}
+          </span>
         </div>
       </div>
     </div>

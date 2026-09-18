@@ -119,7 +119,13 @@ Windows 桌面 App，Tauri + React。把一年的「专注」时间画成 GitHub
   - 已知未修：主窗口关掉后悬浮窗的 Open 会静默失败（要等阶段 6 的"关闭即隐藏 + 托盘退出"一起做）；6 秒内连删两条只能撤销最后一条。
   - 已提交 git（d8bbb03 起）。之后每个阶段结束都提交一次。
   - 格子墙标题的小时数换成 **Transitions.dev Spinning counter**（`ui/SpinningCounter.tsx`，照 `ref/UI/Spinning Counter.md` 改成受控组件）：打开或数值变化时数字卷轴从 0 转 3 圈落到目标，列间错开 90ms。
-  - 下一步：用户验收阶段 5 → **阶段 6** 系统托盘 + 开机自启。
+- **拆解步骤 + 娱乐时长**（2026-09-18，借鉴 Kenotex，方案 C = 手写 + 可选 AI）：
+  - 数据：迁移 `0002_steps_settings.sql`（`time_blocks.steps` JSON 列 + `settings` 表）。`TimeBlock.steps: {text, done}[]`；`store.settings` / `useSetting` 读写设置。
+  - UI：新建/编辑时间块浮层底部的 **Steps** 区（`day/StepsEditor.tsx`）：手写、勾选、删除；填了 API key 才出现「Break it down / Refine with AI」。块上（≥1.5h 的密度）显示「1/3 steps」。
+  - AI（`lib/ai.ts`）：`@anthropic-ai/sdk` 直接在 webview 里调（`dangerouslyAllowBrowser`），`claude-opus-5` + `messages.parse` 结构化输出（zod：3–7 步）+ effort low；key 存本机 SQLite `settings` 明文，只发 api.anthropic.com。没做 fallbacks（任务拆解不会触发拒答；要加时走 beta 路径）。
+  - 设置：右下角齿轮 → `SettingsDialog.tsx`，目前只有 API key（阶段 7 再扩）。
+  - 娱乐时长：格子墙标题「422h focused · 256h leisure」（青灰色），悬浮窗底部「Focus 1h · Leisure 30m」。日程视图本来就有。
+  - 下一步：用户验收 → **阶段 6** 系统托盘 + 开机自启。
 
 ## 接下来：分阶段实施计划
 
