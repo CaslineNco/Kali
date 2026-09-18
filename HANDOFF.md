@@ -39,6 +39,87 @@ Windows 桌面 App，Tauri + React。把一年的「专注」时间画成 GitHub
 - 本地存储：SQLite 或本地文件，待定，不影响现在开工
 - Windows only，v1 不考虑其他平台
 
+## 进度
+
+- **阶段 0 已完成并验收通过**（2026-09-17）：`app/` 目录下是 Tauri + React + TypeScript 项目（Vite 脚手架 + `tauri init`）。`npm run tauri dev` 能正常编译弹出窗口，标题「年度专注格子墙」。
+  - 环境：Rust/Cargo 装在默认 rustup 路径；VS Build Tools（MSVC v143 编译器）因为 C 盘空间不够，改装到了 `D:\VSBuildTools`。新窗口如果 `cargo`/`tauri dev` 报找不到编译器，检查这个装在 D 盘的路径有没有被正确识别（一般不用管，rustup/link 会自动找注册好的 VS 实例）。
+  - 若新终端里 `cargo` 命令找不到（Git Bash 常见），执行 `export PATH="$HOME/.cargo/bin:$PATH"` 或直接用 PowerShell。
+  - `tauri.conf.json` 里 identifier 已改成 `com.caslineco.kali`，窗口标题、vite 端口（1420，固定）都配好了。
+- **阶段 1 已实现，待用户验收**（2026-09-17）：打开 App 直接是年度格子墙。
+  - 标题「2026 · 已确认专注 NNNh」+ 右上角设置图标（还没接功能）；顶部月份标签、左侧 一/三/五、底部图例（未来 / 少→多 5 档）。
+  - 假数据在 `app/src/lib/fakeData.ts`（固定种子，每次打开一样）；分档阈值在 `app/src/lib/levels.ts`（默认 1 / 60 / 150 / 240 分钟）；配色 token 在 `app/src/index.css`（照 PRD 9.9）。
+  - 悬停某格显示日期 + 专注/娱乐时长；今天有珊瑚红描边；未来日期只有淡描边不填色，跟「记录了 0 分钟」区分。
+  - 点格子目前只在底部提示「选中了 X 月 X 日」，日程视图阶段 3 再接。
+  - **用的就是 beui 的 Heat Calendar**（`npx shadcn add @beui/heat-calendar`，装在 `app/src/components/charts/heat-calendar/`，顺带拉进了 Tailwind v4 + shadcn 的 `components.json` 和 `@/` 路径别名）。为了满足 PRD 在组件上做了几处小改，都有中文注释：
+    - `utils.ts`：5 档改成实色 `var(--level-0..4)`（原来是透明度混色）；日期格式改 zh-CN；格子 14px、间距 3px。
+    - `context.ts` / `types.ts`：新增 `today`（之后的格子画成空心「未来」）和 `minDate`（之前的格子留白，用来吃掉上一年末尾几天）。
+    - `grid.tsx`：未来格子画空心描边而不是不渲染；今天加珊瑚红描边。
+    - `legend.tsx`：中文 + 「未来」图例；日期范围显示 1/1 – 12/31。
+    - 组件自带的「点一下钉住、再点一下选区间」交互没用上：`YearWall.tsx` 里把 selection 固定为 null，点击直接回调 `onSelectDay`。
+  - `app/src/components/YearWall.tsx` 是包一层的"整年"视图：算周数、把本地日期搬到组件用的 UTC 日历日、左侧 一/三/五 标签、tooltip 显示专注/娱乐。
+  - 本地看效果：`app/` 下 `npm run tauri dev`。纯网页预览 `npm run dev` 后开 http://localhost:1420 。
+  - gstack `/browse` 的无头 Chromium 因为 C 盘满装到了 `D:\ms-playwright`，用之前要 `export PLAYWRIGHT_BROWSERS_PATH="D:/ms-playwright"`。
+- **阶段 1 验收通过**（2026-09-17）。
+- **阶段 2 已实现，待用户验收**（2026-09-17）：本地数据层用 **SQLite**（`tauri-plugin-sql`），文件在 `%APPDATA%\com.caslineco.kali\kali.db`。
+  - 表结构：`app/src-tauri/migrations/0001_time_blocks.sql`（一张 `time_blocks` 表；`deleted_at` 软删除字段是给将来云同步留的）。以后改表结构就在 `src-tauri/src/lib.rs` 的 `migrations()` 里追加 version 2、3…，不要改已有的。
+  - 状态只存三种 `planned / confirmed / skipped`；「待确认」不存库，由 `displayStatus()`（`app/src/data/types.ts`）按"计划块过了结束时间"现算，省掉后台定时器。
+  - 只有 `confirmed` 的块计入时长（`creditedMinutes()`），`actual_min` 为空就按 `planned_min` 算。
+  - 代码入口：`app/src/data/repo.ts`（SQL 读写 + 纯浏览器预览时的内存版）、`app/src/data/store.ts`（写操作 + `useYearSummary` / `useBlocksOfDay` 等 hooks，写完自动刷新所有视图）。
+  - 格子墙已经改成读真实数据，不再用假数据。`makeDemoBlocks()` 保留为"写入全年演示数据"按钮。
+  - 主窗口底部有一块 **临时验收面板**（`app/src/components/DevPanel.tsx`）：写入今天 4 条测试块 / 写入全年演示数据 / 清空全部，列出今天的块可逐条删除。阶段 3 做出真实界面后删掉。
+- **阶段 2 验收通过**（2026-09-17，用户说"你先做"，按下面两个默认决定直接推进）。
+- **PRD 第 6 节问题 1、2 的默认决定**（用户没否决就按这个走）：
+  1. 排日程块 = 在日程视图点空白时段 / 点底部「新建时间块」→ 浮层填开始/结束时间，不做拖拽。
+  2. 到点确认 = 不打断：块在日程视图/悬浮窗里变成待确认样式（虚线+珊瑚红字），顶部显示「N 条待确认」，没有系统弹窗；堆积的待确认回来后逐条处理。
+- **阶段 3 已实现，待用户验收**（2026-09-17）：
+  - 点格子 → 日程视图（`app/src/components/day/DayView.tsx`），目前是淡入淡出切换，缩放转场留给阶段 8。
+  - 三栏：中间当天时间轴（默认 07:00–20:00，有块超出自动拉长，44px/小时），左右两栏前一天/后一天缩略卡，点了就切过去。重叠的块自动并排（`layoutLanes`）。
+  - 四种状态样式：已确认实心、计划中浅虚线、待确认虚线+珊瑚红「待确认」、已跳过划线变淡。今天有珊瑚红"现在"线。
+  - 底部 beui Expandable Action Bar（悬停展开）：新建时间块 / 补记。点空白时段直接开新建浮层并预填该小时。
+  - 新建/编辑时间块浮层（`NewBlockDialog.tsx`），从上到下：**开始**（小时 / 分钟各一条 Drag stepper，`TimeSteppers`）→ **时长圆盘 + 步进器**（`DurationDial`）→ **结束**（只显示，= 开始 + 时长）。排计划的最小单位 **5 分钟**（`STEP`），圆盘一圈 8 小时，结束最晚 24:00。补记 / 改时长仍是 1 分钟精度（PRD"精确到分钟"指这两处）。
+  - 补记浮层（`BackfillDialog.tsx`）：日期、类型、**时长圆盘 + 拖拽步进器**（`ui/DurationDial.tsx` + `duration-dial.css`）→ 存为 confirmed，没有起止时间，显示在时间轴下方「补记」区。
+    - 圆盘照 bencho.dev **Range dial**（`?c=sleep`）搬的：48 根刻度、点亮刻度按离把手的距离错开长出来、把手按住放大 1.22；改成单把手（起点固定 12 点）、一圈 = 8h、吸附 5 分钟（粗调）。
+    - 下面的药丸照 bencho.dev **Drag stepper**（`?c=stepper`）：点一下 ±1 分钟，按住 260ms 变"扫动"模式左右拖连续改（精调）。两个合起来满足"精确到分钟"。
+    - bencho 没有正式文档，源码是从它的打包产物里读出来重写的（MIT）。阶段 4 的「改时长」直接复用这个组件。
+  - 块上悬停出现删除小图标。
+  - 确认/改时长/跳过 三个操作**还没做**（阶段 4）。
+  - 开发面板改成隐藏：主窗口按 **Ctrl+Shift+D** 显示/隐藏（写演示数据、清空）。
+- **阶段 3 验收通过**（2026-09-17）。
+- **阶段 4 已实现，待用户验收**（2026-09-17）：到点确认流程。
+  - 待确认块（计划块过了结束时间）在日程视图里悬停 → 右侧出现 **确认 / 改时长 / 跳过** 三个小按钮（`DayView.tsx` 的 `PendingActions`）。确认 = status confirmed、actual = planned；跳过 = skipped、不计入；改时长 = `AdjustDialog.tsx`（时长圆盘 + 步进器，预填计划时长）→ confirmed、actual = 填的数。
+  - 格子墙右上角有珊瑚红「N 条待确认」小胶囊（全年范围），点了跳到最近一个有待确认的那天；日程视图标题右侧也有当天的计数。
+  - 没有系统通知、不弹窗（按之前定的"不打断"）。
+  - 今天的时间轴至少画到"现在"，当前时间线不会掉出轴外。
+- **阶段 4 验收通过**（2026-09-18）。
+- **阶段 4.5 打磨：按 Figma 对齐 + 尺度统一 + 六处修正**（2026-09-18，待用户验收）：
+  - **尺度 token**（`app/src/index.css`）：从 beui Todo List / Swipeable List / Action Bar 抽出来——标题 26/32、正文 14/20、次要 12/16、小标签 11/14；行高 44、行内 12×16、行距 8、圆角 卡 16 / 钮 8 / 药丸全圆。所有新 CSS 只用这些变量。
+  - **窗口** 1200×800（Figma 尺寸），最小 1100×700。
+  - **格子墙**照 Figma 01：无卡片、垂直居中、标题「2026 已确认专注 612h · 娱乐另计」与格子左对齐、格间距 4、图例「未来 / less ▪▪▪▪▪ more」右下、日期范围左下、设置齿轮右下角悬浮。**去掉了左侧 一/三/五**（用户拍板按 Figma）。**拖选范围看总时长**已启用（`YearWall.tsx` 自己处理 pointer 事件，单击仍进那天；用户要看效果再定去留）。
+  - **日程视图**照 Figma 02：「‹ 返回格子墙」文字链接、标题 + 一行小结「专注 3h20m · 娱乐 1h · N 条待确认」、三栏 250 / 自适应 / 250 用 1px 竖线隔开、侧栏标题「‹ 昨天 · 9月17日」+ 44px 缩略卡 + 底部「点击切换到这天」、时间轴 **48px/小时**、「现在 07:15」珊瑚红药丸、「＋ 点击空白时段新建时间块」紧跟最后一个块、操作栏左下。
+  - **块的三档密度**（`DayView.tsx` 的 `Block`）：≥52px 两行（标题+状态 / 时间段·类型）；32–52px 一行；<32px 紧凑 12px 单行。文字一律 nowrap+省略号，不再溢出。
+  - 之前列的修正：① 待确认操作按钮**常显**；② **点块可编辑**（`NewBlockDialog` / `BackfillDialog` 支持 `existing`，里面有删除）；③ **过去的日子只能补记**（点空白时段直接开补记，操作栏没有"新建"）、未来的日子没有"补记"；④ 打开今天**自动滚到"现在"**，别的日子滚到第一个块；⑤ **删除可撤销**（底部 6 秒提示条，`repo.restore` 清 `deleted_at`）；⑥ **禁止时间块重叠**（新建/编辑时查同一天其它块，重叠则红字提示、保存禁用）。
+  - 起止步进器：开始推过结束（或反之）时整块平移、保持时长，不再压成 1 分钟。
+  - **数据层改成按年加载、按天缓存**（`app/src/data/store.ts`）：写操作落库后就地改缓存，不再整年重拉；`useBlocksOfDay` 同步返回缓存数组。
+  - 排计划改成"开始 + 时长"（结束只显示），最小单位 5 分钟；补记/改时长仍 1 分钟。
+- **阶段 4.5 验收通过**（2026-09-18）。
+- **阶段 5 已实现，待用户验收**（2026-09-18）：常驻悬浮窗。
+  - 第二个 Tauri 窗口 `float`（`tauri.conf.json`）：300×340、无边框、透明、置顶、不进任务栏、不可缩放；加载同一个前端，`index.html?float` → `src/float/FloatWindow.tsx`（`main.tsx` 里按 URL 分流）。标题栏 `data-tauri-drag-region` 可拖动。
+  - **界面就是 beui Swipeable List 示例的原样壳子**（用户点名"直接用它的组件"）：`rounded-[2rem]` 卡片、头部「Today / 一行状态 / Open 按钮」、列表、底部「N open · x/y done / Focus 1h」，Tailwind 类直接照示例抄，没有自定义 CSS（`float.css` 只剩透明背景）。每行 leading 是示例同款 40×40 图标盒，里面放 Todo List 的 `TodoStatusIcon`。窗口 300×420。
+  - **所有行都能滑**：进行中/到点的行左滑 Confirm、右滑 Skip；已确认/已跳过的行两边都是 Reset（退回 planned）。之前只让到点的行能滑，用户反馈"滑不动"就是碰到了被锁的行。已用真实鼠标（PowerShell mouse_event）在 Tauri 窗口里验证过滑动正常。
+  - 用的组件：`components/agents/todo-list.tsx`（导出了 `TodoStatusIcon`）、`components/motion/swipeable-list.tsx`。**只有进行中 / 到点待确认的行能滑**：左滑露出「确认」、右滑露出「跳过」；已确认、已跳过、还没到点的计划不能滑。
+  - 点某一行 → 主窗口显示并跳到今天的日程视图（`emit('kali:open-day')`，`App.tsx` 监听）。
+  - **跨窗口同步**：`store.ts` 每次写完 `emit('kali:blocks-changed')`，另一个窗口收到后清缓存重拉。两边永远是同一份数据。
+  - 悬浮窗不做新建/补记（PRD 9.3）。显示/隐藏由阶段 6 的托盘菜单控制，现在跟主窗口一起出现。
+  - 开发：纯浏览器预览 `http://localhost:1420/?float`，控制台里有 `window.__kali`（= store.blocks）可以直接写测试数据。
+  - **界面文案全部改成英文**（用户要求，2026-09-18）：所有 UI 字符串、日期格式（`lib/date.ts` 的 fmtDateTitle 等）、Heat Calendar 的月份/tooltip、窗口标题（`Kali — Year of focus` / `Today`）、`index.html` 标题。代码注释仍是中文。
+  - **字体和布局对齐 beui**（2026-09-18）：全局字体换成 beui.dev 同款 **Geist / Geist Mono**（`@fontsource-variable/geist*`，本地打包）；`html` 字号恢复 16px（之前 `:root` 设了 14px，把 beui 组件里所有 rem 尺寸缩了 0.875，行高/内边距都不对），我们自己的 14/20 只放在 `body` 上，自己的 CSS 全是 px token 不受影响。悬浮窗改成 **400×540**，正好装下 beui 示例的 `max-w-sm` 卡片（384px、行高 72、间距 8）。
+  - 悬浮窗滑动映射改成跟 beui 示例一致：右滑 → Done；左滑 → Skip + Trash；已处理的行右滑 Reset、左滑 Trash。右侧 meta 是时间（进行中「Now · 25%」，到点未确认红色「Due」）。头部「Today · 08:42」+「2 done · 3 left」。
+  - **时间块可拖动**（2026-09-18）：日程视图里按住块上下拖 → 整块平移（吸附 5 分钟，保持时长），松手落库；拖到跟别的块重叠会变珊瑚红并弹回；指针挪不到 4px 算点击（打开编辑）。实现在 `DayView.tsx` 的 `Block`（pointer capture + `store.patch`）。
+- **检查 / 审查 round**（2026-09-18，`/code-review` + 自查后修的）：主窗口每分钟刷时钟（跨午夜"今天"会换、待确认计数按当前时间算）；数据库打开失败不再永久缓存失败、主窗口底部红条提示；跨窗口同步只重拉动过的日期；悬浮窗 Trash 带 6 秒 Undo、底部也可拖窗口、**还没开始的块不能滑 Done**（只能 Skip/Trash，避免把没发生的专注计入）、"left" 不再把 skipped 算进去；起止步进器最晚 23:55（不掉到 23:59）；编辑块时保留原始分钟不再吸附；开发面板快捷键只在 dev 生效；日期标题加逗号。
+  - 已知未修：主窗口关掉后悬浮窗的 Open 会静默失败（要等阶段 6 的"关闭即隐藏 + 托盘退出"一起做）；6 秒内连删两条只能撤销最后一条。
+  - **代码从未提交过 git**（`app/` 整个是 untracked）——等用户点头后提交。
+  - 下一步：用户验收阶段 5 → **阶段 6** 系统托盘 + 开机自启。
+
 ## 接下来：分阶段实施计划
 
 每个阶段的验收标准都写成"打开界面能看到/点到什么"，不是"代码逻辑对不对"。

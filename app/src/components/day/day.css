@@ -1,0 +1,692 @@
+/* ---------- 日程视图骨架（照 Figma 02：无卡片，竖线分栏） ---------- */
+.day {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+.day-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.day-back {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  cursor: pointer;
+}
+
+.day-back:hover {
+  color: var(--text);
+}
+
+.day-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+
+.day-title {
+  margin: 0;
+  font-size: var(--fs-title);
+  line-height: var(--lh-title);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.day-sum {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--muted);
+}
+
+.day-sum-pending {
+  color: var(--coral);
+}
+
+.day-cols {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr) 250px;
+  gap: 0;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+.day-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  padding: 0 24px;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+
+/* 时间轴自己滚，操作栏留在底部 */
+.day-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 8px 4px 16px 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.day-bar {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-start;
+  padding-top: 4px;
+}
+
+/* ---------- 侧栏 ---------- */
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 24px 0 0;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.side[data-side='next'] {
+  padding: 0 0 0 24px;
+}
+
+.side-title {
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+
+.side[data-side='next'] .side-title {
+  text-align: right;
+}
+
+.side-empty {
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--border);
+}
+
+.side-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* 缩略卡：44px 高，标题 14 + 副标题 12（Figma 02 侧栏卡片） */
+.side-item {
+  --c: var(--amber);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  height: var(--row-h);
+  padding: 0 10px;
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--c) 20%, var(--bg));
+  border: 1px solid transparent;
+  opacity: 0.7;
+  transition: opacity 140ms;
+}
+
+.side:hover .side-item {
+  opacity: 1;
+}
+
+.side-item[data-kind='fun'] {
+  --c: var(--teal);
+}
+
+.side-item[data-status='planned'] {
+  background: none;
+  border: 1px dashed color-mix(in srgb, var(--c) 45%, transparent);
+}
+
+.side-item[data-status='skipped'] {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+
+.side-item-title {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-item-sub {
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.side-more {
+  font-size: var(--fs-sub);
+  color: var(--muted);
+  padding: 0 10px;
+}
+
+.side-hint {
+  margin-top: auto;
+  padding-top: 16px;
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--border);
+}
+
+.side[data-side='next'] .side-hint {
+  text-align: right;
+}
+
+/* ---------- 时间轴 ---------- */
+.tl {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tl-axis {
+  position: relative;
+  margin-left: 52px;
+}
+
+.tl-hour {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 48px;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.tl-hour-label {
+  position: absolute;
+  left: -52px;
+  top: -8px;
+  width: 40px;
+  text-align: right;
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.tl-slot {
+  position: absolute;
+  inset: 1px 0 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.tl-slot:hover {
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+/* 「＋ 点击空白时段新建时间块」紧跟最后一个块 */
+.tl-empty {
+  position: absolute;
+  left: 12px;
+  z-index: 2;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tl-empty:hover {
+  color: var(--text);
+}
+
+.tl-now {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1.5px solid var(--coral);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.tl-now::before {
+  content: '';
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+.tl-now-pill {
+  position: absolute;
+  left: 12px;
+  top: -11px;
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--coral);
+  color: var(--bg);
+  font-size: var(--fs-cap);
+  line-height: var(--lh-cap);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 时间块（Figma 02 结构 + beui 行高） ---------- */
+.blk {
+  --c: var(--amber);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0;
+  padding: 6px 12px;
+  border-radius: var(--r-btn);
+  border: 1px solid var(--c);
+  background: color-mix(in srgb, var(--c) 22%, var(--bg));
+  color: var(--text);
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+  transition: filter 120ms;
+}
+
+.blk:hover {
+  filter: brightness(1.12);
+}
+
+.blk-abs {
+  cursor: grab;
+  touch-action: none;
+}
+
+/* 拖动中：抬起来、不做过渡；撞到别的块就变珊瑚红提示会弹回 */
+.blk[data-dragging] {
+  z-index: 5;
+  cursor: grabbing;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  transition: none;
+  filter: brightness(1.12);
+}
+
+.blk[data-clash] {
+  border-color: var(--coral) !important;
+  background: color-mix(in srgb, var(--coral) 18%, var(--bg)) !important;
+}
+
+.blk[data-kind='fun'] {
+  --c: var(--teal);
+}
+
+.blk-abs {
+  position: absolute;
+  z-index: 2;
+}
+
+.blk[data-density='tight'] {
+  padding: 1px 12px;
+}
+
+/* 补记列表里的横条：44px 一行 */
+.blk-row {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  height: var(--row-h);
+  width: 100%;
+}
+
+/* 四种状态 */
+.blk[data-status='planned'] {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--c) 55%, transparent);
+  background: color-mix(in srgb, var(--c) 6%, var(--bg));
+  color: var(--muted);
+}
+
+.blk[data-status='pending'] {
+  border-style: dashed;
+  border-color: var(--c);
+  background: color-mix(in srgb, var(--c) 12%, var(--bg));
+}
+
+.blk[data-status='skipped'] {
+  opacity: 0.45;
+  border-style: solid;
+  border-color: var(--border);
+  background: none;
+  text-decoration: line-through;
+}
+
+.blk-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.blk-title {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blk[data-density='tight'] .blk-title {
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  font-weight: 400;
+}
+
+.blk-sub {
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.blk-status {
+  flex-shrink: 0;
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--c);
+  white-space: nowrap;
+}
+
+.blk[data-status='planned'] .blk-status,
+.blk[data-status='skipped'] .blk-status {
+  color: var(--muted);
+}
+
+/* 待确认的操作条：常显在右侧 */
+.blk-actions {
+  display: inline-flex;
+  flex-shrink: 0;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.blk-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--bg);
+  color: var(--text);
+  font-size: var(--fs-cap);
+  line-height: var(--lh-cap);
+  cursor: pointer;
+}
+
+.blk[data-density='tight'] .blk-act {
+  height: 16px;
+  padding: 0 6px;
+}
+
+.blk-act:hover {
+  border-color: var(--muted);
+}
+
+.blk-act-ok:hover {
+  color: var(--amber);
+  border-color: var(--amber);
+}
+
+.blk-act-skip:hover {
+  color: var(--coral);
+  border-color: var(--coral);
+}
+
+.tl-untimed {
+  margin-left: 52px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.tl-untimed-title {
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+}
+
+/* ---------- 删除后的撤销条 ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 60;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: var(--row-h);
+  padding: 0 var(--pad-x);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  font-size: var(--fs-sub);
+}
+
+.toast-btn {
+  border: 0;
+  background: none;
+  color: var(--amber);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ---------- 浮层 / 表单 ---------- */
+.dlg-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.dlg {
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 20px 22px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-card);
+  background: var(--bg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+}
+
+.dlg-title {
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.form-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.form-muted {
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+}
+
+.form-hint {
+  margin: 0;
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+}
+
+.form-end {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.form-end-time {
+  font-size: 18px;
+  line-height: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.form-warn {
+  color: var(--coral);
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.form-spacer {
+  flex: 1;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: var(--fs-sub);
+  color: var(--muted);
+}
+
+.field input {
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-btn);
+  padding: 7px 10px;
+  outline: none;
+  color-scheme: dark;
+}
+
+.field input:focus {
+  border-color: var(--amber);
+}
+
+.field input[type='text'] {
+  width: 100%;
+}
+
+.btn {
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-btn);
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.btn-primary {
+  background: var(--amber);
+  border-color: var(--amber);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--level-4);
+}
+
+.btn-danger:hover:not(:disabled) {
+  color: var(--coral);
+  border-color: var(--coral);
+}
+
+/* 专注/娱乐 二选一 */
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  align-self: flex-start;
+}
+
+.seg-item {
+  padding: 5px 16px;
+  border: 0;
+  border-radius: 7px;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 13px;
+  transition:
+    background 120ms,
+    color 120ms;
+}
+
+.seg-item[data-on='true'][data-kind='focus'] {
+  background: var(--amber);
+  color: var(--bg);
+  font-weight: 600;
+}
+
+.seg-item[data-on='true'][data-kind='fun'] {
+  background: var(--teal);
+  color: var(--bg);
+  font-weight: 600;
+}

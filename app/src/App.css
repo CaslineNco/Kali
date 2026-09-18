@@ -1,0 +1,235 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 24px 28px;
+  gap: 22px;
+}
+
+/* 日程视图：整页锁在窗口高度里，时间轴在中间栏内部滚，操作栏固定在底部 */
+.page-day {
+  flex: 0 0 100vh;
+  min-height: 0;
+  height: 100vh;
+  overflow: hidden;
+  padding-bottom: 20px;
+}
+
+/* ---------- 年度格子墙（照 Figma 01：无卡片，垂直居中，标题与格子左对齐） ---------- */
+.page-wall {
+  justify-content: center;
+  align-items: center;
+}
+
+.wall {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.wall-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.wall-title {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-size: var(--fs-title);
+  line-height: var(--lh-title);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.wall-title-sub {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.wall-hint {
+  margin: 0;
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+}
+
+.pending-chip {
+  padding: 3px 11px;
+  border: 1px solid color-mix(in srgb, var(--coral) 50%, transparent);
+  border-radius: var(--r-pill);
+  background: none;
+  color: var(--coral);
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  cursor: pointer;
+  transition: background 120ms;
+}
+
+.pending-chip:hover {
+  background: color-mix(in srgb, var(--coral) 12%, transparent);
+}
+
+/* 右下角悬浮的设置入口 */
+.gear {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-btn);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    color 120ms,
+    border-color 120ms;
+}
+
+.gear:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid transparent;
+  border-radius: var(--r-btn);
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  color: var(--text);
+  background: var(--surface);
+  border-color: var(--border);
+}
+
+.db-error {
+  position: fixed;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  z-index: 70;
+  padding: 10px 14px;
+  border: 1px solid var(--coral);
+  border-radius: var(--r-btn);
+  background: color-mix(in srgb, var(--coral) 14%, var(--bg));
+  color: var(--text);
+  font-size: var(--fs-sub);
+}
+
+/* ---------- 隐藏的开发面板（Ctrl+Shift+D） ---------- */
+.dev {
+  position: fixed;
+  left: 24px;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 18px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+}
+
+.dev-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.dev-tag {
+  padding: 2px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.dev-muted {
+  color: var(--muted);
+}
+
+.dev-btn {
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.dev-btn:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+.dev-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dev-btn-danger:hover:not(:disabled) {
+  color: var(--coral);
+  border-color: var(--coral);
+}
+
+.dev-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dev-list li {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.dev-focus {
+  color: var(--amber);
+}
+
+.dev-fun {
+  color: var(--teal);
+}
+
+.dev-link {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.dev-link:hover {
+  color: var(--coral);
+}

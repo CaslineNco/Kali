@@ -1,0 +1,15 @@
+/* Float window: a transparent OS window; the card itself is beui's Swipeable List preview shell */
+html[data-win='float'],
+html[data-win='float'] body {
+  background: transparent;
+  overflow: hidden;
+  user-select: none;
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

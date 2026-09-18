@@ -1,0 +1,262 @@
+/* 时长圆盘：结构和数值照 bencho.dev Range dial（.slp）搬过来，尺寸 288 → 240，颜色换成本项目 token */
+.dd {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+.dd-dial {
+  position: relative;
+  width: 216px;
+  height: 216px;
+  color: var(--text);
+}
+
+.dd-arc {
+  position: absolute;
+  inset: 0;
+  width: 216px;
+  height: 216px;
+  cursor: grab;
+  touch-action: none;
+  outline: none;
+}
+
+.dd-arc[data-dragging] {
+  cursor: grabbing;
+}
+
+.dd-arc:focus-visible {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--amber) 50%, transparent);
+}
+
+.dd-arc line {
+  stroke: var(--muted);
+}
+
+/* 点亮的刻度：琥珀色，从根部长出来，离把手越远越晚一点 */
+.dd-arc line[data-on] {
+  stroke: var(--amber);
+  animation: dd-fill 0.26s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--d, 0) * 16ms);
+}
+
+@keyframes dd-fill {
+  0% {
+    stroke-dashoffset: 1px;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dd-arc line[data-on] {
+    animation-duration: 1ms;
+    animation-delay: 0s;
+  }
+}
+
+.dd-knobs {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 216px;
+  height: 216px;
+  margin: -108px 0 0 -108px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.dd-knob {
+  grid-area: 1 / 1;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow:
+    0 0 0 1.5px var(--amber),
+    0 2px 8px rgba(0, 0, 0, 0.45);
+}
+
+.dd-mid {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  translate: 0 -50%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.dd-figure {
+  font-size: 34px;
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.dd-unit {
+  margin-left: 3px;
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.035em;
+  opacity: 0.42;
+}
+
+.dd-unit[data-pair] {
+  margin-right: 6px;
+}
+
+/* Drag stepper（.step-pill）*/
+.dd-pill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+  overflow: hidden;
+  transition: transform 0.32s cubic-bezier(0.24, 1.34, 0.38, 1);
+}
+
+.dd-pill[data-sweep] {
+  transform: scaleX(1.06);
+}
+
+.dd-side {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  opacity: 0.55;
+  cursor: pointer;
+  touch-action: none;
+  transition: opacity 0.16s;
+}
+
+.dd-side:hover {
+  opacity: 1;
+}
+
+.dd-value {
+  position: relative;
+  z-index: 2;
+  min-width: 58px;
+  text-align: center;
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.32s cubic-bezier(0.24, 1.34, 0.38, 1);
+}
+
+.dd-pill[data-sweep] .dd-value {
+  transform: scale(1.18);
+}
+
+.dd-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  transform-origin: 0;
+  background: color-mix(in srgb, var(--amber) 16%, transparent);
+  opacity: 0;
+  transition: opacity 0.22s;
+}
+
+.dd-pill[data-sweep] .dd-fill {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dd-pill,
+  .dd-value {
+    transition-duration: 1ms;
+  }
+}
+
+/* 起止时间圆盘的附加部分 */
+.dd-knob {
+  display: grid;
+  place-items: center;
+}
+
+.dd-pip {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--amber);
+}
+
+.dd-hour {
+  fill: var(--muted);
+  font-size: 8px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+.dd-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.dd-label {
+  position: relative;
+  z-index: 2;
+  padding-left: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.dd-pills .dd-side {
+  width: 34px;
+}
+
+.dd-pills .dd-value {
+  min-width: 50px;
+}
+
+/* 时刻步进器（开始 / 结束） */
+.ts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ts-label {
+  width: 34px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ts-unit {
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 6px;
+}
+
+.ts .dd-side {
+  width: 32px;
+  height: 36px;
+}
+
+.ts .dd-pill {
+  height: 36px;
+}
+
+.ts .dd-value {
+  min-width: 34px;
+  font-size: 15px;
+}

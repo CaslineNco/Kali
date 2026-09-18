@@ -1,2 +1,9 @@
 .claude/
 research/
+
+# app (Tauri + React)
+app/node_modules/
+app/dist/
+app/src-tauri/target/
+app/src-tauri/gen/
+.gstack/
