@@ -119,7 +119,7 @@ function NewBlockForm({
           maxLength={80}
         />
       </label>
-      <StepsEditor steps={steps} onChange={setSteps} context={{ title: note, kind, minutes: duration }} />
+      <StepsEditor steps={steps} onChange={setSteps} />
       {!ex && <p className="form-hint">Saved as planned — you’ll be asked to confirm when it ends.</p>}
       <div className="form-actions">
         {ex && onDelete && (

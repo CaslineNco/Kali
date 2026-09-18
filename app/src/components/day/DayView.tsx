@@ -444,6 +444,7 @@ function Block({
           <PendingActions block={b} onAdjust={onAdjust} />
         ) : (
           <span className="blk-status">
+            {density === 'one' ? `${range} · ` : ''}
             {STATUS_LABEL[status]}
             {b.kind === 'fun' && status === 'confirmed' ? ' · Leisure' : ''}
           </span>
@@ -542,7 +543,6 @@ function SideDay({
           {blocks.length > 9 && <li className="side-more">+{blocks.length - 9} more</li>}
         </ul>
       )}
-      <div className="side-hint">Click to switch to this day</div>
     </button>
   );
 }

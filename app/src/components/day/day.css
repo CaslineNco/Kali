@@ -152,6 +152,10 @@
   opacity: 1;
 }
 
+.side:hover .side-title {
+  color: var(--text);
+}
+
 .side-item[data-kind='fun'] {
   --c: var(--teal);
 }
@@ -188,18 +192,6 @@
   font-size: var(--fs-sub);
   color: var(--muted);
   padding: 0 10px;
-}
-
-.side-hint {
-  margin-top: auto;
-  padding-top: 16px;
-  font-size: var(--fs-sub);
-  line-height: var(--lh-sub);
-  color: var(--border);
-}
-
-.side[data-side='next'] .side-hint {
-  text-align: right;
 }
 
 /* ---------- 时间轴 ---------- */
@@ -475,6 +467,7 @@
 }
 
 .tl-untimed {
+  margin-top: 24px;
   margin-left: 52px;
   display: flex;
   flex-direction: column;
@@ -637,7 +630,7 @@
 
 .btn:disabled {
   opacity: 0.5;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 .btn-primary {
@@ -668,36 +661,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-}
-
-.steps-ai {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 26px;
-  padding: 0 10px;
-  border: 1px solid color-mix(in srgb, var(--amber) 55%, transparent);
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--amber) 10%, transparent);
-  color: var(--amber);
-  font-size: var(--fs-sub);
-  cursor: pointer;
-}
-
-.steps-ai:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--amber) 18%, transparent);
-}
-
-.steps-ai:disabled {
-  opacity: 0.5;
-  cursor: default;
-}
-
-.steps-nokey {
-  font-size: var(--fs-cap);
-  line-height: var(--lh-cap);
-  color: var(--muted);
-  text-align: right;
 }
 
 .steps-list {
@@ -760,7 +723,7 @@
 
 .steps-x:disabled {
   opacity: 0.4;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 .steps-add {

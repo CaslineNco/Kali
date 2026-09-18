@@ -1,27 +1,13 @@
-import { Plus, Sparkles, X } from 'lucide-react';
+import { Plus, X } from 'lucide-react';
 import { useState } from 'react';
-import { useSetting } from '@/data/store';
 import type { Step } from '@/data/types';
-import { AiError, API_KEY_SETTING, breakDown, type BreakdownInput } from '@/lib/ai';
 
 /**
- * 拆解步骤清单：手写为底线，填了 API key 才出现「Break it down」。
- * 勾选只是给自己看的进度，不影响时长、不影响格子颜色。
+ * 拆解步骤清单：手写"第一步做什么"，勾一步是一步。
+ * 只是给自己看的进度，不影响时长、不影响格子颜色。（AI 生成先不做）
  */
-export function StepsEditor({
-  steps,
-  onChange,
-  context,
-}: {
-  steps: Step[];
-  onChange: (steps: Step[]) => void;
-  /** 给 AI 的上下文：标题、类型、时长 */
-  context: Omit<BreakdownInput, 'existing'>;
-}) {
-  const apiKey = useSetting(API_KEY_SETTING);
+export function StepsEditor({ steps, onChange }: { steps: Step[]; onChange: (steps: Step[]) => void }) {
   const [draft, setDraft] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const add = () => {
     const text = draft.trim();
@@ -32,22 +18,6 @@ export function StepsEditor({
   const update = (i: number, patch: Partial<Step>) => onChange(steps.map((s, j) => (j === i ? { ...s, ...patch } : s)));
   const remove = (i: number) => onChange(steps.filter((_, j) => j !== i));
 
-  const generate = async () => {
-    if (!apiKey) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const texts = await breakDown(apiKey, { ...context, existing: steps.map((s) => s.text) });
-      // 保留已经勾掉的那几步，其余用新生成的替换
-      const kept = steps.filter((s) => s.done);
-      onChange([...kept, ...texts.filter((t) => !kept.some((k) => k.text === t)).map((text) => ({ text, done: false }))]);
-    } catch (err) {
-      setError(err instanceof AiError ? err.message : 'Something went wrong.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const done = steps.filter((s) => s.done).length;
 
   return (
@@ -56,17 +26,7 @@ export function StepsEditor({
         <span className="form-muted">
           Steps{steps.length ? ` · ${done}/${steps.length}` : ''}
         </span>
-        {apiKey ? (
-          <button type="button" className="steps-ai" disabled={busy || !context.title.trim()} onClick={() => void generate()}>
-            <Sparkles size={12} />
-            {busy ? 'Thinking…' : steps.length ? 'Refine with AI' : 'Break it down'}
-          </button>
-        ) : (
-          <span className="steps-nokey">Add an API key in Settings to break tasks down with AI</span>
-        )}
       </div>
-      {!context.title.trim() && apiKey && <p className="form-hint">Give the block a title first so the steps have something to work from.</p>}
-      {error && <p className="form-hint form-warn">{error}</p>}
       {steps.length > 0 && (
         <ol className="steps-list">
           {steps.map((s, i) => (

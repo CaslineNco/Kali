@@ -110,7 +110,15 @@ function App() {
                 data={data}
                 onSelectDay={(d) => setView({ kind: 'day', date: toKey(d) })}
               />
-              <p className="wall-hint">Click a day to open it · drag across days to total a span</p>
+              {all.length === 0 && !error && (
+                <p className="wall-empty">
+                  Nothing logged yet.{' '}
+                  <button type="button" className="wall-empty-link" onClick={() => setView({ kind: 'day', date: todayKey })}>
+                    Open today
+                  </button>{' '}
+                  and plan the first block.
+                </p>
+              )}
             </div>
             <button type="button" className="gear" aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)}>
               <Settings size={16} />

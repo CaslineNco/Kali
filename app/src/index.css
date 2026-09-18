@@ -91,3 +91,9 @@ button {
   font: inherit;
   color: inherit;
 }
+
+/* 键盘焦点：所有可交互元素统一一圈琥珀色，鼠标点击不显示 */
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--amber) 70%, transparent);
+  outline-offset: 2px;
+}

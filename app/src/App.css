@@ -74,11 +74,22 @@
   font-weight: 600;
 }
 
-.wall-hint {
+.wall-empty {
   margin: 0;
   font-size: var(--fs-sub);
   line-height: var(--lh-sub);
   color: var(--muted);
+}
+
+.wall-empty-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--amber);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .pending-chip {
@@ -205,7 +216,7 @@
 
 .dev-btn:disabled {
   opacity: 0.5;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 .dev-btn-danger:hover:not(:disabled) {
