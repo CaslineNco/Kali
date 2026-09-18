@@ -32,9 +32,13 @@ function App() {
   // 悬浮窗点了某一行 → 跳到那天的日程视图
   useEffect(() => {
     if (!('__TAURI_INTERNALS__' in window)) return;
-    const un = listen<DayKey>('kali:open-day', (e) => setView({ kind: 'day', date: e.payload }));
+    const un = Promise.all([
+      listen<DayKey>('kali:open-day', (e) => setView({ kind: 'day', date: e.payload })),
+      // 托盘菜单的「Settings…」
+      listen('kali:open-settings', () => setSettingsOpen(true)),
+    ]);
     return () => {
-      void un.then((f) => f());
+      void un.then((fs) => fs.forEach((f) => f()));
     };
   }, []);
 

@@ -19,6 +19,9 @@
     "core:window:allow-set-position",
     "core:window:allow-outer-position",
     "core:window:allow-inner-size",
-    "core:webview:allow-webview-position"
+    "core:webview:allow-webview-position",
+    "autostart:default",
+    "core:tray:default",
+    "core:menu:default"
   ]
 }

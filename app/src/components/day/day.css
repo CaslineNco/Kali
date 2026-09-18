@@ -749,6 +749,72 @@
   border-color: var(--amber);
 }
 
+/* ---------- 设置行 + 开关 ---------- */
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: var(--row-h);
+  cursor: pointer;
+}
+
+.setting-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.setting-label {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.setting-hint {
+  font-size: var(--fs-sub);
+  line-height: var(--lh-sub);
+  color: var(--muted);
+}
+
+.switch {
+  appearance: none;
+  flex-shrink: 0;
+  width: 40px;
+  height: 22px;
+  margin: 0;
+  border-radius: var(--r-pill);
+  background: var(--border);
+  position: relative;
+  cursor: pointer;
+  transition: background 150ms;
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text);
+  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.switch:checked {
+  background: var(--amber);
+}
+
+.switch:checked::after {
+  transform: translateX(18px);
+  background: var(--bg);
+}
+
+.switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* 专注/娱乐 二选一 */
 .seg {
   display: inline-flex;

@@ -126,7 +126,13 @@ Windows 桌面 App，Tauri + React。把一年的「专注」时间画成 GitHub
   - 设置：右下角齿轮 → `SettingsDialog.tsx`，占位（阶段 7 填内容）。
   - 娱乐时长：格子墙标题「422h focused · 256h leisure」（青灰色），悬浮窗底部「Focus 1h · Leisure 30m」。日程视图本来就有。
 - **设计审核 round**（2026-09-18，按 gstack /design-review 的 10 类清单手工过了 8 张截图；gstack 的 setup 需要 bun，用户没同意装，所以 skill 没注册，清单是直接读 SKILL.md 用的）。改了：格子墙去掉说明文字、加空数据时的引导（"Nothing logged yet. Open today…"）；1 小时的块在状态位显示时间段；「Logged」区上方留 24px；侧栏去掉"Click to switch"说明改用悬停高亮；全局 `:focus-visible` 琥珀焦点环；禁用按钮 `cursor: not-allowed`。审核里暂不改的：正文 14px（beui 同款密度）、原生日期输入框样式、格子墙没有产品名（Figma 也没有）。
-  - 下一步：用户验收 → **阶段 6** 系统托盘 + 开机自启。
+- **阶段 6 已实现，待用户验收**（2026-09-18）：系统托盘 + 开机自启。
+  - Rust（`src-tauri/src/lib.rs`）：`tauri` 开 `tray-icon` feature；托盘图标用默认窗口图标；右键菜单 = Open Kali / ☑ Show today widget / ☑ Launch at login / Settings… / Quit Kali；**左键点托盘 = 打开主窗口**（PRD 第 6 节问题 3 的默认决定）。
+  - **关主窗口 = 隐藏到托盘**（`on_window_event` 拦 CloseRequested），程序继续跑；真正退出只有托盘的 Quit。已用 WM_CLOSE 验证：主窗口 hidden、进程存活、悬浮窗还在。
+  - 开机自启：`tauri-plugin-autostart`（写 HKCU\…\Run），**默认关**；托盘菜单和设置页都能切，两边通过 `kali:autostart` / `kali:widget-visible` 事件同步。
+  - 设置页（`SettingsDialog.tsx`）：两个开关（Launch at login / Show today widget）+ 占位说明；托盘「Settings…」发 `kali:open-settings`，主窗口收到就打开。
+  - 权限：`autostart:default`、`core:tray:default`、`core:menu:default`。
+  - 下一步：用户验收阶段 6 → **阶段 7** 设置页（颜色阈值、悬浮窗透明度、数据路径）。
 
 ## 接下来：分阶段实施计划
 
