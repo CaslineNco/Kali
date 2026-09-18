@@ -59,6 +59,16 @@
   color: var(--muted);
 }
 
+.wall-hours {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 600;
+  color: var(--amber);
+  font-variant-numeric: tabular-nums;
+}
+
 .wall-hint {
   margin: 0;
   font-size: var(--fs-sub);

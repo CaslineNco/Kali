@@ -1,0 +1,37 @@
+/* Transitions.dev spinning counter — 样式照原文，尺寸走 --reel-cell */
+.t-reel {
+  display: inline-flex;
+  align-items: center;
+  height: var(--reel-cell, 32px);
+  font-variant-numeric: tabular-nums;
+  vertical-align: bottom;
+}
+
+.t-reel-col {
+  position: relative;
+  height: var(--reel-cell, 32px);
+  overflow: hidden;
+  /* 上下边缘柔和淡出，不生硬裁切 */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 22%, #000 78%, transparent 100%);
+}
+
+.t-reel-strip {
+  display: flex;
+  flex-direction: column;
+  will-change: transform;
+}
+
+.t-reel-digit,
+.t-reel-sep {
+  height: var(--reel-cell, 32px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-reel-strip {
+    transition: none !important;
+  }
+}

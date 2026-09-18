@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 import { DayView } from './components/day/DayView';
 import { DevPanel } from './components/DevPanel';
+import { SpinningCounter } from './components/ui/SpinningCounter';
 import { YearWall } from './components/YearWall';
 import { useYearSummary } from './data/store';
 import { displayStatus } from './data/types';
@@ -78,7 +79,12 @@ function App() {
               <header className="wall-header">
                 <h1 className="wall-title">
                   {year}
-                  <span className="wall-title-sub">{Math.round(totalFocusMin / 60)}h confirmed focus · leisure tracked separately</span>
+                  <span className="wall-title-sub">
+                    <span className="wall-hours">
+                      <SpinningCounter value={totalFocusMin / 60} cell={28} />h
+                    </span>{' '}
+                    focused · leisure tracked separately
+                  </span>
                 </h1>
                 {pendingCount > 0 && (
                   <button
