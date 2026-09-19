@@ -24,12 +24,15 @@ export function DurationDial({
   max = 480,
   stepper = true,
   step = 1,
+  size = SIZE,
 }: {
   value: number;
   onChange: (min: number) => void;
   max?: number;
   /** 圆盘下面要不要带步进器 */
   stepper?: boolean;
+  /** 渲染尺寸（px），表单里空间紧可以缩到 180 */
+  size?: number;
   /** 最小单位：圆盘吸附和步进器都按它走。排计划 5，记实际 1 */
   step?: number;
 }) {
@@ -54,13 +57,13 @@ export function DurationDial({
   const rad = (min: number) => ((min / max) * 360 - 90) * (Math.PI / 180);
   const handleIdx = (value / max) * DENSITY; // 把手落在第几根刻度附近
 
-  const knobR = (REACH + 11) * (SIZE / VB);
+  const knobR = (REACH + 11) * (size / VB);
   const knob = { x: Math.cos(rad(value)) * knobR, y: Math.sin(rad(value)) * knobR };
   const h = Math.floor(value / 60);
   const m = value % 60;
 
   return (
-    <div className="dd">
+    <div className="dd" style={{ '--dd-size': `${size}px` } as React.CSSProperties}>
       <div className="dd-dial">
         <svg
           ref={svgRef}

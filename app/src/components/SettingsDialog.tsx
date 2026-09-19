@@ -2,6 +2,8 @@ import { emit, listen } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { disable, enable, isEnabled } from '@tauri-apps/plugin-autostart';
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/motion/button/base';
+import { Switch } from '@/components/motion/switch';
 import { Dialog } from '@/components/ui/Dialog';
 
 const inTauri = () => '__TAURI_INTERNALS__' in window;
@@ -59,7 +61,7 @@ function SettingsForm({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="form">
+    <div className="flex flex-col gap-2">
       <Row
         label="Launch at login"
         hint="Off by default. Kali starts in the tray with the widget on screen."
@@ -74,13 +76,12 @@ function SettingsForm({ onClose }: { onClose: () => void }) {
         disabled={widget === null}
         onChange={(v) => void toggleWidget(v)}
       />
-      {error && <p className="form-hint form-warn">{error}</p>}
-      <p className="form-hint">Color thresholds, widget opacity and the data location come in a later stage.</p>
-      <div className="form-actions">
-        <span className="form-spacer" />
-        <button type="button" className="btn" onClick={onClose}>
+      {error && <p className="text-xs text-destructive">{error}</p>}
+      <p className="pt-2 text-xs text-muted-foreground">Color thresholds, widget opacity and the data location come in a later stage.</p>
+      <div className="flex justify-end pt-2">
+        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
           Close
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -100,19 +101,12 @@ function Row({
   onChange: (v: boolean) => void;
 }) {
   return (
-    <label className="setting-row">
-      <span className="setting-text">
-        <span className="setting-label">{label}</span>
-        <span className="setting-hint">{hint}</span>
+    <div className="flex min-h-11 items-center justify-between gap-4">
+      <span className="flex flex-col">
+        <span className="text-sm text-foreground">{label}</span>
+        <span className="text-xs text-muted-foreground">{hint}</span>
       </span>
-      <input
-        type="checkbox"
-        role="switch"
-        className="switch"
-        checked={checked}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-    </label>
+      <Switch checked={checked} disabled={disabled} onCheckedChange={onChange} ariaLabel={label} />
+    </div>
   );
 }

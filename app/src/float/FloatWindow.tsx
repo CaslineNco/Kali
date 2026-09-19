@@ -3,7 +3,8 @@ import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { AnimatePresence, motion } from 'motion/react';
 import { Check, Clock3, ExternalLink, RotateCcw, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { TodoStatusIcon, type TodoItemStatus } from '@/components/agents/todo-list';
+import type { TodoItemStatus } from '@/components/agents/todo-list';
+import { MarkBox } from '@/components/day/BlockRow';
 import { SwipeableList, type SwipeAction, type SwipeableListItem } from '@/components/motion/swipeable-list';
 import { blocks as store, useBlocksOfDay } from '@/data/store';
 import { displayStatus, type TimeBlock } from '@/data/types';
@@ -72,14 +73,7 @@ export function FloatWindow() {
     // Done only once the block has started — crediting focus that hasn't happened is the one thing the wall must never do
     leftActions: st === 'confirmed' || st === 'skipped' ? [resetAction] : actionable ? [doneAction] : [],
     rightActions: st === 'confirmed' || st === 'skipped' ? [trashAction] : [skipAction, trashAction],
-    leading: (
-      <div
-        className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-background text-muted-foreground data-[status=completed]:text-amber-400 data-[status=in-progress]:text-amber-400"
-        data-status={status}
-      >
-        <TodoStatusIcon status={status} progress={progress} />
-      </div>
-    ),
+    leading: <MarkBox kind={b.kind} status={st} running={running} progress={progress} />,
     title: (
       <span
         className={

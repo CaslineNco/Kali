@@ -1,10 +1,12 @@
 import { useState } from 'react';
+import { Button } from '@/components/motion/button/base';
+import { Input } from '@/components/motion/input';
 import { Dialog, KindToggle } from '@/components/ui/Dialog';
 import { DurationDial, TimeSteppers } from '@/components/ui/DurationDial';
 import { blocks } from '@/data/store';
 import type { BlockKind, Step, TimeBlock } from '@/data/types';
-import { StepsEditor } from './StepsEditor';
 import { fmtDateShort, fmtHm, fromKey, type DayKey } from '@/lib/date';
+import { StepsEditor } from './StepsEditor';
 
 export interface NewBlockDraft {
   date: DayKey;
@@ -87,60 +89,56 @@ function NewBlockForm({
     }
   };
 
+  const warning = !valid
+    ? 'Runs past midnight — start earlier or shorten it.'
+    : clash
+      ? `Overlaps “${clash.note || (clash.kind === 'focus' ? 'Focus' : 'Leisure')} ${fmtHm(clash.startMin!)}–${fmtHm(clash.endMin!)}” — adjust the time.`
+      : null;
+
   return (
     <form
-      className="form"
+      className="flex flex-col gap-4"
       onSubmit={(ev) => {
         ev.preventDefault();
         void save();
       }}
     >
-      <div className="form-muted">{fmtDateShort(fromKey(draft.date))}</div>
-      <KindToggle value={kind} onChange={setKind} />
-      <TimeSteppers label="Start" value={start} step={STEP} onChange={setStart} />
-      <DurationDial value={duration} max={DIAL_MAX} step={STEP} onChange={setDuration} />
-      <div className="form-end">
-        <span className="form-muted">Ends</span>
-        <span className="form-end-time">{fmtHm(Math.min(end, DAY_END))}</span>
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted-foreground">{fmtDateShort(fromKey(draft.date))}</span>
+        <KindToggle value={kind} onChange={setKind} />
       </div>
-      {!valid && <p className="form-hint form-warn">Runs past midnight — start earlier or shorten it.</p>}
-      {valid && clash && (
-        <p className="form-hint form-warn">
-          Overlaps “{clash.note || (clash.kind === 'focus' ? 'Focus' : 'Leisure')} {fmtHm(clash.startMin!)}–{fmtHm(clash.endMin!)}” — adjust the time
-        </p>
-      )}
-      <label className="field">
-        <span>What (optional)</span>
-        <input
-          type="text"
-          placeholder="e.g. Write the proposal"
-          value={note}
-          onChange={(ev) => setNote(ev.target.value)}
-          maxLength={80}
-        />
-      </label>
+      <TimeSteppers label="Start" value={start} step={STEP} onChange={setStart} />
+      <DurationDial value={duration} max={DIAL_MAX} step={STEP} size={176} onChange={setDuration} />
+      <div className="flex items-baseline gap-2.5">
+        <span className="text-xs text-muted-foreground">Ends</span>
+        <span className="text-lg font-semibold tabular-nums text-foreground">{fmtHm(Math.min(end, DAY_END))}</span>
+      </div>
+      {warning && <p className="text-xs text-destructive">{warning}</p>}
+      <Input label="What (optional)" placeholder="e.g. Write the proposal" value={note} onChange={setNote} maxLength={80} />
       <StepsEditor steps={steps} onChange={setSteps} />
-      {!ex && <p className="form-hint">Saved as planned — you’ll be asked to confirm when it ends.</p>}
-      <div className="form-actions">
+      {!ex && <p className="text-xs text-muted-foreground">Saved as planned — you’ll be asked to confirm when it ends.</p>}
+      <div className="flex items-center gap-2 pt-1">
         {ex && onDelete && (
-          <button
+          <Button
             type="button"
-            className="btn btn-danger"
+            variant="outline"
+            size="sm"
+            className="hover:border-destructive hover:text-destructive"
             onClick={() => {
               onDelete(ex);
               onClose();
             }}
           >
             Delete
-          </button>
+          </Button>
         )}
-        <span className="form-spacer" />
-        <button type="button" className="btn" onClick={onClose}>
+        <span className="flex-1" />
+        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
           Cancel
-        </button>
-        <button type="submit" className="btn btn-primary" disabled={!valid || !!clash || saving}>
+        </Button>
+        <Button type="submit" variant="primary" size="sm" disabled={!valid || !!clash || saving}>
           Save
-        </button>
+        </Button>
       </div>
     </form>
   );

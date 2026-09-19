@@ -9,16 +9,16 @@
 
 .dd-dial {
   position: relative;
-  width: 216px;
-  height: 216px;
+  width: var(--dd-size, 216px);
+  height: var(--dd-size, 216px);
   color: var(--text);
 }
 
 .dd-arc {
   position: absolute;
   inset: 0;
-  width: 216px;
-  height: 216px;
+  width: var(--dd-size, 216px);
+  height: var(--dd-size, 216px);
   cursor: grab;
   touch-action: none;
   outline: none;
@@ -64,9 +64,9 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 216px;
-  height: 216px;
-  margin: -108px 0 0 -108px;
+  width: var(--dd-size, 216px);
+  height: var(--dd-size, 216px);
+  margin: calc(var(--dd-size, 216px) / -2) 0 0 calc(var(--dd-size, 216px) / -2);
   display: grid;
   place-items: center;
   pointer-events: none;

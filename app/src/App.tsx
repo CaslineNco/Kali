@@ -1,5 +1,6 @@
 import { listen } from '@tauri-apps/api/event';
 import { Settings } from 'lucide-react';
+import { Button } from './components/motion/button/base';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useState } from 'react';
 import './App.css';
@@ -63,6 +64,13 @@ function App() {
     [all, todayKey, nowMin],
   );
 
+  // 每天排了几个计划块，给格子墙上未来日期的 tooltip
+  const plannedByDay = useMemo(() => {
+    const m = new Map<DayKey, number>();
+    for (const b of all) if (b.status === 'planned' && b.startMin !== null) m.set(b.date, (m.get(b.date) ?? 0) + 1);
+    return m;
+  }, [all]);
+
   const totals = useMemo(() => {
     let focus = 0;
     let fun = 0;
@@ -98,35 +106,48 @@ function App() {
                   </span>
                 </h1>
                 {pendingCount > 0 && (
-                  <button
-                    type="button"
-                    className="pending-chip"
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-destructive/40 text-destructive hover:bg-destructive/10"
                     title="Go to the latest day with unconfirmed blocks"
                     onClick={() => setView({ kind: 'day', date: pendingDates[0] })}
                   >
                     {pendingCount} to confirm
-                  </button>
+                  </Button>
                 )}
               </header>
               <YearWall
                 year={year}
                 today={today}
                 data={data}
+                planned={plannedByDay}
                 onSelectDay={(d) => setView({ kind: 'day', date: toKey(d) })}
               />
               {all.length === 0 && !error && (
                 <p className="wall-empty">
                   Nothing logged yet.{' '}
-                  <button type="button" className="wall-empty-link" onClick={() => setView({ kind: 'day', date: todayKey })}>
+                  <button
+                    type="button"
+                    className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-amber underline underline-offset-4"
+                    onClick={() => setView({ kind: 'day', date: todayKey })}
+                  >
                     Open today
                   </button>{' '}
                   and plan the first block.
                 </p>
               )}
             </div>
-            <button type="button" className="gear" aria-label="Settings" title="Settings" onClick={() => setSettingsOpen(true)}>
+            <Button
+              variant="secondary"
+              size="icon"
+              className="fixed bottom-6 right-6 text-muted-foreground hover:text-foreground"
+              aria-label="Settings"
+              title="Settings"
+              onClick={() => setSettingsOpen(true)}
+            >
               <Settings size={16} />
-            </button>
+            </Button>
           </motion.div>
         ) : (
           <motion.div

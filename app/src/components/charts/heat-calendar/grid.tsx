@@ -65,23 +65,7 @@ export function HeatCalendarGrid({ children, className }: { children?: ReactNode
         DAYS.map(({ id: dayId, d }) => {
           const date = dateOf(w, d);
           if (hidden(w, d)) return null;
-          if (future(w, d))
-            return (
-              <span
-                key={`${id}-${dayId}`}
-                className="relative block aspect-square w-full"
-                style={{ gridColumn: w + 1, gridRow: d + 2 }}
-                aria-hidden
-              >
-                <span
-                  className="absolute inset-0.5 block rounded-[4px]"
-                  style={{
-                    background: FUTURE,
-                    boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--border) 60%, transparent)",
-                  }}
-                />
-              </span>
-            );
+          const isFuture = future(w, d);
           const v = level(w, d);
           const b = bucket(v);
           const i = w * 7 + d;
@@ -112,8 +96,9 @@ export function HeatCalendarGrid({ children, className }: { children?: ReactNode
                     cannot steal a click either */}
               <motion.button
                 type="button"
-                aria-label={`${count(v)} ${unit}${date ? ` on ${fmtDay.format(date)}` : ""}`}
+                aria-label={`${isFuture ? "upcoming" : `${count(v)} ${unit}`}${date ? ` on ${fmtDay.format(date)}` : ""}`}
                 data-heat-cell={`${w}-${d}`}
+                data-future={isFuture || undefined}
                 aria-pressed={isEnd}
                 aria-describedby={on ? tooltipId : undefined}
                 onPointerEnter={() => setHover({ w, d })}
@@ -129,8 +114,10 @@ export function HeatCalendarGrid({ children, className }: { children?: ReactNode
                 <motion.span
                   className="pointer-events-none absolute inset-0.5 block rounded-[4px]"
                   style={{
-                    background: fill(b),
-                    boxShadow: isEnd
+                    background: isFuture ? FUTURE : fill(b),
+                    boxShadow: isFuture && !isEnd && !isToday
+                      ? "inset 0 0 0 1px color-mix(in srgb, var(--border) 60%, transparent)"
+                      : isEnd
                       ? "0 0 0 2px var(--background), 0 0 0 3.5px var(--foreground)"
                       : isToday
                         ? "inset 0 0 0 1.5px var(--coral)"

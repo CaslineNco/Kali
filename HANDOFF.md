@@ -132,7 +132,15 @@ Windows 桌面 App，Tauri + React。把一年的「专注」时间画成 GitHub
   - 开机自启：`tauri-plugin-autostart`（写 HKCU\…\Run），**默认关**；托盘菜单和设置页都能切，两边通过 `kali:autostart` / `kali:widget-visible` 事件同步。
   - 设置页（`SettingsDialog.tsx`）：两个开关（Launch at login / Show today widget）+ 占位说明；托盘「Settings…」发 `kali:open-settings`，主窗口收到就打开。
   - 权限：`autostart:default`、`core:tray:default`、`core:menu:default`。
-  - 下一步：用户验收阶段 6 → **阶段 7** 设置页（颜色阈值、悬浮窗透明度、数据路径）。
+- **阶段 6 验收通过**（2026-09-19，用户跳过，直接要求做后面的）。gstack 不装了（用户决定）。
+- **UI 统一到 beui**（2026-09-19，用户说"界面太杂，尤其日程视图"）：
+  - 装了 `button-base / tabs / switch / input / checkbox / animated-badge / animated-toast-stack / center-morph-modal`；`index.css` 的 `@theme` 补齐了 shadcn 全套 token（secondary/popover/input/accent-foreground + teal/amber/coral 色）。
+  - **一种块的长相**（`day/BlockRow.tsx`）：`[40×40 MarkBox] 标题 14/medium + 描述 12/muted … 右侧 AnimatedBadge`，表面统一 `rounded-xl border-border bg-card`。类型只在 MarkBox 颜色（琥珀/青灰），状态只在徽章（Planned neutral / Confirm? danger / Confirmed success / Skipped neutral+划线）。时间轴块、左右侧栏卡、Logged 行、悬浮窗行全都用它。时间轴块三档：≥64px 完整；44px 去掉盒子和描述（时间段放标题后）；更矮单行小字。待确认的三个按钮在矮块上只留图标。
+  - 浮层壳 = `CenterMorphModal`（从中心展开 + 模糊背景）；Focus/Leisure = `Tabs segment`；输入 = `Input`；开关 = `Switch`；勾选 = `Checkbox`；所有按钮 = `Button`（primary/secondary/ghost/outline）；删除撤销 = `AnimatedToastStack`（底部居中，带 Undo）。
+  - `day.css` 从 ~700 行减到 ~120 行，只剩三栏/刻度/定位几何；`.btn .seg .switch .field .form .dlg .blk-* .side-* .steps-*` 全删。日期输入框还是原生 `<input type=date>`（Tailwind 类套成药丸）。
+  - 空白时段的说明文字换成悬停出现的 `+`；侧栏缩到 220px。`DurationDial` 加了 `size` prop（新建浮层里 176，装得下）。
+- **格子墙未来日期可点**（2026-09-19）：`heat-calendar/grid.tsx` 未来格子现在是真正的按钮（空心样式保留），`context.ts` 的 `validCell` 不再排除未来；tooltip 显示「N planned / Nothing planned」（`App.tsx` 算 `plannedByDay` 传给 `YearWall.planned`）。点进去就是那天的日程视图，可以排计划（未来日期没有 Log time）。
+  - 下一步：**阶段 7** 设置页（颜色阈值、悬浮窗透明度、数据路径）→ 日历导入（ICS 订阅 / 文件）→ 阶段 8 缩放转场 → 阶段 9 本周固定安排 → 阶段 10 打磨。
 
 ## 接下来：分阶段实施计划
 

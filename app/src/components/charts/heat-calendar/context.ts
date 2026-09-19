@@ -80,7 +80,6 @@ export function useHeatCalendarModel({
     cell.w < weeks &&
     cell.d >= 0 &&
     cell.d < 7 &&
-    !future(cell.w, cell.d) &&
     !hidden(cell.w, cell.d);
   const selection =
     requestedSelection &&

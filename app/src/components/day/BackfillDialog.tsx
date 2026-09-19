@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Dialog, KindToggle } from '@/components/ui/Dialog';
+import { Button } from '@/components/motion/button/base';
+import { Input } from '@/components/motion/input';
+import { Dialog, Field, KindToggle } from '@/components/ui/Dialog';
 import { DurationDial } from '@/components/ui/DurationDial';
 import { blocks } from '@/data/store';
 import type { BlockKind, TimeBlock } from '@/data/types';
@@ -64,51 +66,52 @@ function BackfillForm({
 
   return (
     <form
-      className="form"
+      className="flex flex-col gap-4"
       onSubmit={(ev) => {
         ev.preventDefault();
         void save();
       }}
     >
-      <div className="form-row">
-        <label className="field">
-          <span>Date</span>
-          <input type="date" value={day} max={today} onChange={(ev) => setDay(ev.target.value)} required />
-        </label>
+      <div className="flex items-end justify-between gap-3">
+        <Field label="Date">
+          <input
+            type="date"
+            className="h-10 rounded-full border border-border bg-card px-4 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40 [color-scheme:dark]"
+            value={day}
+            max={today}
+            onChange={(ev) => setDay(ev.target.value)}
+            required
+          />
+        </Field>
         <KindToggle value={kind} onChange={setKind} />
       </div>
       <DurationDial value={minutes} onChange={setMinutes} />
-      <label className="field">
-        <span>What (optional)</span>
-        <input
-          type="text"
-          placeholder="e.g. Reading"
-          value={note}
-          onChange={(ev) => setNote(ev.target.value)}
-          maxLength={80}
-        />
-      </label>
-      {!ex && <p className="form-hint">Logs time after the fact — skips planning and confirmation, counts immediately.</p>}
-      <div className="form-actions">
+      <Input label="What (optional)" placeholder="e.g. Reading" value={note} onChange={setNote} maxLength={80} />
+      {!ex && (
+        <p className="text-xs text-muted-foreground">Logs time after the fact — skips planning and confirmation, counts immediately.</p>
+      )}
+      <div className="flex items-center gap-2 pt-1">
         {ex && onDelete && (
-          <button
+          <Button
             type="button"
-            className="btn btn-danger"
+            variant="outline"
+            size="sm"
+            className="hover:border-destructive hover:text-destructive"
             onClick={() => {
               onDelete(ex);
               onClose();
             }}
           >
             Delete
-          </button>
+          </Button>
         )}
-        <span className="form-spacer" />
-        <button type="button" className="btn" onClick={onClose}>
+        <span className="flex-1" />
+        <Button type="button" variant="ghost" size="sm" onClick={onClose}>
           Cancel
-        </button>
-        <button type="submit" className="btn btn-primary" disabled={!valid || saving}>
+        </Button>
+        <Button type="submit" variant="primary" size="sm" disabled={!valid || saving}>
           Save
-        </button>
+        </Button>
       </div>
     </form>
   );

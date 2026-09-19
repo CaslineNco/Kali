@@ -1,30 +1,25 @@
-import { CalendarPlus, Check, PenLine, SkipForward, Timer } from 'lucide-react';
+import { CalendarPlus, Check, PenLine, Plus, SkipForward, Timer } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
+import { AnimatedBadge } from '@/components/motion/animated-badge';
+import { AnimatedToastStack, useAnimatedToastStack } from '@/components/motion/animated-toast-stack';
+import { Button } from '@/components/motion/button/base';
 import { ExpandableActionBar } from '@/components/motion/expandable-action-bar';
 import { blocks as store, useBlocksOfDay } from '@/data/store';
 import { creditedMinutes, displayStatus, type DisplayStatus, type TimeBlock } from '@/data/types';
 import { addDays, fmtDateTitle, fmtHm, fmtMinutes, fmtMonthDay, fromKey, nowMinutes, toKey, type DayKey } from '@/lib/date';
+import { cn } from '@/lib/utils';
 import { AdjustDialog } from './AdjustDialog';
 import { BackfillDialog, type BackfillDraft } from './BackfillDialog';
+import { BlockRow, MarkBox, StatusBadge, blockTitle, kindLabel } from './BlockRow';
 import { NewBlockDialog, type NewBlockDraft } from './NewBlockDialog';
 import './day.css';
 
-/* 时间轴尺度：48px/小时 → 1 小时的块 = 44px，正好是 beui 的一行（Todo List h-11） */
+/* 时间轴尺度：48px/小时 → 1 小时的块 = 44px，正好是 beui 的一行 */
 const HOUR_PX = 48;
 const BLOCK_GAP = 4;
 const DEFAULT_START = 7;
 const DEFAULT_END = 20;
-
-const STATUS_LABEL: Record<DisplayStatus, string> = {
-  planned: 'Planned',
-  pending: 'Confirm?',
-  confirmed: 'Confirmed',
-  skipped: 'Skipped',
-};
-
-const kindLabel = (b: TimeBlock) => (b.kind === 'focus' ? 'Focus' : 'Leisure');
-const title = (b: TimeBlock) => b.note || kindLabel(b);
 
 /** 每分钟刷一次「现在」，让当前时间线和待确认状态跟着走 */
 function useNow() {
@@ -60,19 +55,21 @@ export function DayView({
   const [backfill, setBackfill] = useState<BackfillDraft | null>(null);
   const [adjusting, setAdjusting] = useState<TimeBlock | null>(null);
 
-  // 删除 → 底部提示条可撤销
-  const [undo, setUndo] = useState<{ block: TimeBlock; timer: number } | null>(null);
+  // 删除 → beui toast，带 Undo
+  const { toasts, showToast, dismissToast } = useAnimatedToastStack({ defaultDuration: 6000, limit: 3 });
   const remove = async (b: TimeBlock) => {
-    if (undo) window.clearTimeout(undo.timer);
     await store.remove(b.id);
-    const timer = window.setTimeout(() => setUndo(null), 6000);
-    setUndo({ block: b, timer });
-  };
-  const restore = async () => {
-    if (!undo) return;
-    window.clearTimeout(undo.timer);
-    await store.restore(undo.block.id);
-    setUndo(null);
+    showToast({
+      title: `Deleted “${blockTitle(b)}”`,
+      status: 'neutral',
+      action: {
+        label: 'Undo',
+        onClick: (t) => {
+          void store.restore(b.id);
+          dismissToast(t.id);
+        },
+      },
+    });
   };
 
   const totals = useMemo(() => {
@@ -100,14 +97,7 @@ export function DayView({
   const actions = [
     ...(isPast
       ? []
-      : [
-          {
-            id: 'new',
-            label: 'New block',
-            icon: <CalendarPlus className="h-4 w-4" />,
-            onClick: () => setDraft({ date }),
-          },
-        ]),
+      : [{ id: 'new', label: 'New block', icon: <CalendarPlus className="h-4 w-4" />, onClick: () => setDraft({ date }) }]),
     ...(date > todayKey
       ? []
       : [{ id: 'backfill', label: 'Log time', icon: <PenLine className="h-4 w-4" />, onClick: () => setBackfill({ date }) }]),
@@ -115,21 +105,21 @@ export function DayView({
 
   return (
     <div className="day">
-      <header className="day-header">
-        <button type="button" className="day-back" onClick={onBack}>
+      <header className="flex flex-col gap-1">
+        <Button variant="ghost" size="sm" className="-ml-2 h-7 w-fit px-2 text-xs" onClick={onBack}>
           ‹ Back to the year
-        </button>
-        <div className="day-title-row">
-          <h1 className="day-title">{fmtDateTitle(day)}</h1>
-          <span className="day-sum">
+        </Button>
+        <div className="flex items-baseline gap-6">
+          <h1 className="text-[26px] font-semibold leading-8 tracking-tight text-foreground">{fmtDateTitle(day)}</h1>
+          <span className="text-sm text-muted-foreground">
             Focus {fmtMinutes(totals.focus)} · Leisure {fmtMinutes(totals.fun)}
-            {pendingCount > 0 && <span className="day-sum-pending"> · {pendingCount} to confirm</span>}
+            {pendingCount > 0 && <span className="text-destructive"> · {pendingCount} to confirm</span>}
           </span>
         </div>
       </header>
 
       <div className="day-cols">
-        <SideDay date={prevKey} todayKey={todayKey} side="prev" onClick={() => onChangeDate(prevKey)} />
+        <SideDay date={prevKey} todayKey={todayKey} nowMin={nowMin} side="prev" onClick={() => onChangeDate(prevKey)} />
         <div className="day-main">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
@@ -154,34 +144,18 @@ export function DayView({
             </motion.div>
           </AnimatePresence>
           {actions.length > 0 && (
-            <div className="day-bar">
+            <div className="shrink-0 pt-1">
               <ExpandableActionBar size="md" items={actions} />
             </div>
           )}
         </div>
-        <SideDay date={nextKey} todayKey={todayKey} side="next" onClick={() => onChangeDate(nextKey)} />
+        <SideDay date={nextKey} todayKey={todayKey} nowMin={nowMin} side="next" onClick={() => onChangeDate(nextKey)} />
       </div>
 
       <NewBlockDialog draft={draft} others={timed} onClose={() => setDraft(null)} onDelete={(b) => void remove(b)} />
       <BackfillDialog draft={backfill} onClose={() => setBackfill(null)} onDelete={(b) => void remove(b)} />
       <AdjustDialog block={adjusting} onClose={() => setAdjusting(null)} />
-
-      <AnimatePresence>
-        {undo && (
-          <motion.div
-            className="toast"
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.15 }}
-          >
-            <span>Deleted “{title(undo.block)}”</span>
-            <button type="button" className="toast-btn" onClick={() => void restore()}>
-              Undo
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <AnimatedToastStack toasts={toasts} onDismiss={dismissToast} position="bottom-center" />
     </div>
   );
 }
@@ -220,7 +194,6 @@ function Timeline({
   const hours = Array.from({ length: endHour - startHour + 1 }, (_, i) => startHour + i);
   const y = (min: number) => ((min - startHour * 60) / 60) * HOUR_PX;
   const showNow = isToday && nowMin >= startHour * 60 && nowMin <= endHour * 60;
-  const lastEnd = timed.reduce((m, b) => Math.max(m, b.endMin!), startHour * 60);
 
   // 打开今天时把"现在"滚到视野中间；别的日子滚到第一个块
   const nowRef = useRef<HTMLDivElement>(null);
@@ -229,14 +202,13 @@ function Timeline({
     const target = (nowRef.current ?? axisRef.current?.querySelector<HTMLElement>('.blk')) as HTMLElement | null;
     const scroller = axisRef.current?.closest<HTMLElement>('.day-scroll');
     if (!target || !scroller) return;
-    // 只滚中间栏自己，不用 scrollIntoView（它会连外层 overflow:hidden 的页面一起滚）
     const top = target.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop;
     scroller.scrollTop = Math.max(0, top - scroller.clientHeight / 2);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isToday]);
 
   return (
-    <div className="tl">
+    <div className="flex flex-col gap-6">
       <div className="tl-axis" ref={axisRef} style={{ height: (hours.length - 1) * HOUR_PX + 1 }}>
         {hours.map((h, i) => (
           <div key={h} className="tl-hour" style={{ top: i * HOUR_PX }}>
@@ -244,10 +216,15 @@ function Timeline({
             {i < hours.length - 1 && (
               <button
                 type="button"
-                className="tl-slot"
+                className="tl-slot group"
                 aria-label={`${h}:00 ${isPast ? 'log time' : 'new block'}`}
                 onClick={() => onSlot(h * 60)}
-              />
+              >
+                {/* 悬停空白时段时出现的加号，代替说明文字 */}
+                <span className="tl-slot-plus">
+                  <Plus size={12} />
+                </span>
+              </button>
             )}
           </div>
         ))}
@@ -257,6 +234,8 @@ function Timeline({
             key={b.id}
             block={b}
             status={displayStatus(b, todayKey, nowMin)}
+            running={isToday && b.status === 'planned' && b.startMin! <= nowMin && nowMin < b.endMin!}
+            nowMin={nowMin}
             top={y(b.startMin!) + BLOCK_GAP / 2}
             height={Math.max(20, y(b.endMin!) - y(b.startMin!) - BLOCK_GAP)}
             lane={lane}
@@ -267,35 +246,31 @@ function Timeline({
           />
         ))}
 
-        {!isPast && (
-          <button type="button" className="tl-empty" style={{ top: y(lastEnd) + 10 }} onClick={() => onSlot(lastEnd)}>
-            ＋ Click an empty slot to add a block
-          </button>
-        )}
-
         {showNow && (
           <div className="tl-now" ref={nowRef} style={{ top: y(nowMin) }}>
-            <span className="tl-now-pill">Now {fmtHm(nowMin)}</span>
+            <AnimatedBadge
+              status="danger"
+              size="sm"
+              showIcon={false}
+              className="tl-now-badge border-destructive bg-destructive font-semibold text-background"
+              contentKey={fmtHm(nowMin)}
+            >
+              Now {fmtHm(nowMin)}
+            </AnimatedBadge>
           </div>
         )}
       </div>
 
       {untimed.length > 0 && (
-        <div className="tl-untimed">
-          <div className="tl-untimed-title">Logged</div>
+        <div className="ml-[52px] flex flex-col gap-2">
           {untimed.map((b) => (
             <button
               key={b.id}
               type="button"
-              className="blk blk-row"
-              data-kind={b.kind}
-              data-status={b.status}
+              className="blk w-full rounded-xl border border-border bg-card px-4 py-3 text-left"
               onClick={() => onOpen(b)}
             >
-              <span className="blk-title">{title(b)}</span>
-              <span className="blk-sub">
-                {fmtMinutes(b.actualMin ?? b.plannedMin)} · {kindLabel(b)}
-              </span>
+              <BlockRow block={b} status={b.status} description={`Logged ${fmtMinutes(b.actualMin ?? b.plannedMin)} · ${kindLabel(b)}`} />
             </button>
           ))}
         </div>
@@ -335,18 +310,19 @@ function layoutLanes(blocks: TimeBlock[]) {
   return out;
 }
 
-/**
- * 块的三种密度（照 Figma 02 的块结构 + beui 行高）：
- *   ≥ 52px：标题 14 + 状态 12 一行，下面「09:00–11:00 · 专注」12 一行
- *   32–52px：只有第一行（1 小时块 = 44px 就是这档）
- *   < 32px：紧凑单行 12px「标题 · 09:00–09:30」+ 状态
- */
 const DRAG_SNAP = 5; // 拖动吸附 5 分钟，跟排计划的最小单位一致
 const DRAG_DEAD = 4; // 指针挪不到 4px 算点击，不算拖
 
+/**
+ * 时间轴上的块 = BlockRow 放进一个绝对定位的卡片。
+ * ≥ 64px（≥ 1h20）完整一行（标记盒 + 两行文字）；44px（1h）去掉标记盒和描述；更矮就单行小字。
+ * 拖动整块上下移：按住拖 → 跟着指针走（吸附 5 分钟）→ 松手落库；跟别的块重叠就弹回去。
+ */
 function Block({
   block: b,
   status,
+  running,
+  nowMin,
   top,
   height,
   lane,
@@ -357,6 +333,8 @@ function Block({
 }: {
   block: TimeBlock;
   status: DisplayStatus;
+  running: boolean;
+  nowMin: number;
   top: number;
   height: number;
   lane: number;
@@ -365,21 +343,22 @@ function Block({
   onOpen: (b: TimeBlock) => void;
   onAdjust: (b: TimeBlock) => void;
 }) {
-  const density = height >= 52 ? 'full' : height >= 32 ? 'one' : 'tight';
+  const density = height >= 64 ? 'full' : height >= 36 ? 'one' : 'tight';
   const w = 100 / lanes;
   const duration = b.endMin! - b.startMin!;
+  const progress = running ? Math.round(((nowMin - b.startMin!) / duration) * 100) : undefined;
 
-  // 拖动整块上下移：按住拖 → 块跟着指针走（吸附 5 分钟）→ 松手落库；跟别的块重叠就弹回去
-  const drag = useRef<{ y0: number; pointerId: number } | null>(null);
-  const [offset, setOffset] = useState<number | null>(null); // 拖动中相对原位的分钟数
+  const drag = useRef<{ y0: number } | null>(null);
+  const [offset, setOffset] = useState<number | null>(null);
   const clampStart = (start: number) => Math.max(0, Math.min(24 * 60 - duration, start));
-  const snapped = (dy: number) => clampStart(b.startMin! + Math.round((dy / HOUR_PX) * 60 / DRAG_SNAP) * DRAG_SNAP) - b.startMin!;
+  const snapped = (dy: number) =>
+    clampStart(b.startMin! + Math.round(((dy / HOUR_PX) * 60) / DRAG_SNAP) * DRAG_SNAP) - b.startMin!;
   const clashes = (start: number) =>
     others.some((o) => o.id !== b.id && o.startMin! < start + duration && o.endMin! > start);
 
   const onPointerDown = (e: ReactPointerEvent) => {
     if (e.button !== 0 || (e.target as HTMLElement).closest('button')) return;
-    drag.current = { y0: e.clientY, pointerId: e.pointerId };
+    drag.current = { y0: e.clientY };
     e.currentTarget.setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: ReactPointerEvent) => {
@@ -394,28 +373,38 @@ function Block({
     drag.current = null;
     if (!d) return;
     if (offset === null) {
-      onOpen(b); // 没拖动 = 点击
+      onOpen(b);
       return;
     }
     const next = b.startMin! + offset;
     setOffset(null);
-    if (offset !== 0 && !clashes(next)) {
-      void store.patch(b.id, { startMin: next, endMin: next + duration });
-    }
+    if (offset !== 0 && !clashes(next)) void store.patch(b.id, { startMin: next, endMin: next + duration });
   };
 
   const shownStart = b.startMin! + (offset ?? 0);
   const range = `${fmtHm(shownStart)}–${fmtHm(shownStart + duration)}`;
   const dragging = offset !== null;
   const bad = dragging && clashes(shownStart);
+
+  const trailing =
+    status === 'pending' ? (
+      <PendingActions block={b} onAdjust={onAdjust} compact={density !== 'full'} />
+    ) : running && progress !== undefined ? (
+      <AnimatedBadge status="warning" size="sm" showIcon={false} contentKey={progress}>
+        Now · {progress}%
+      </AnimatedBadge>
+    ) : (
+      <StatusBadge status={status} />
+    );
+
   return (
     <div
-      className="blk blk-abs"
-      data-kind={b.kind}
-      data-status={status}
-      data-density={density}
-      data-dragging={dragging || undefined}
-      data-clash={bad || undefined}
+      className={cn(
+        'blk absolute z-[2] cursor-grab overflow-hidden rounded-xl border border-border bg-card',
+        density === 'full' ? 'px-4 py-3' : density === 'one' ? 'px-4 py-2' : 'px-3 py-0.5',
+        dragging && 'z-[5] cursor-grabbing shadow-2xl',
+        bad && 'border-destructive bg-destructive/10',
+      )}
       role="button"
       tabIndex={0}
       style={{
@@ -423,6 +412,7 @@ function Block({
         height,
         left: `calc(${lane * w}% + 6px)`,
         width: `calc(${w}% - ${lanes > 1 ? 10 : 6}px)`,
+        touchAction: 'none',
       }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
@@ -435,61 +425,61 @@ function Block({
         if (e.key === 'Enter') onOpen(b);
       }}
     >
-      <div className="blk-line">
-        <span className="blk-title">
-          {title(b)}
-          {density === 'tight' && <span className="blk-sub"> · {range}</span>}
-        </span>
-        {status === 'pending' ? (
-          <PendingActions block={b} onAdjust={onAdjust} />
-        ) : (
-          <span className="blk-status">
-            {density === 'one' ? `${range} · ` : ''}
-            {STATUS_LABEL[status]}
-            {b.kind === 'fun' && status === 'confirmed' ? ' · Leisure' : ''}
-          </span>
-        )}
-      </div>
-      {density === 'full' && (
-        <div className="blk-sub">
-          {range} · {kindLabel(b)}
-          {b.steps.length > 0 ? ` · ${b.steps.filter((s) => s.done).length}/${b.steps.length} steps` : ''}
-          {status === 'confirmed' && b.actualMin !== null && b.actualMin !== b.plannedMin
-            ? ` · actual ${fmtMinutes(b.actualMin)}`
-            : ''}
+      {density === 'tight' ? (
+        <div className="flex h-full items-center gap-2 text-xs">
+          <span className={cn('truncate', status === 'skipped' && 'line-through text-muted-foreground')}>{blockTitle(b)}</span>
+          <span className="ml-auto shrink-0 text-muted-foreground">{range}</span>
         </div>
+      ) : (
+        <BlockRow
+          block={b}
+          status={status}
+          running={running}
+          progress={progress}
+          compact={density === 'one'}
+          description={`${range} · ${kindLabel(b)}${
+            status === 'confirmed' && b.actualMin !== null && b.actualMin !== b.plannedMin ? ` · actual ${fmtMinutes(b.actualMin)}` : ''
+          }${b.steps.length ? ` · ${b.steps.filter((s) => s.done).length}/${b.steps.length} steps` : ''}`}
+          trailing={trailing}
+        />
       )}
     </div>
   );
 }
 
-/** 待确认块的三个操作：确认（按计划时长计入）/ 改时长 / 跳过（不计入）。常显。 */
-function PendingActions({ block: b, onAdjust }: { block: TimeBlock; onAdjust: (b: TimeBlock) => void }) {
+/** 待确认块的三个操作：确认（按计划时长计入）/ 改时长 / 跳过（不计入）。常显；矮块只留图标。 */
+function PendingActions({ block: b, onAdjust, compact }: { block: TimeBlock; onAdjust: (b: TimeBlock) => void; compact?: boolean }) {
   const stop = (e: MouseEvent) => e.stopPropagation();
+  const cls = compact ? 'h-7 w-7' : 'h-7 px-2.5 text-[11px]';
+  const size = compact ? 'icon' : 'sm';
   return (
-    <span className="blk-actions" onClick={stop}>
-      <button
-        type="button"
-        className="blk-act blk-act-ok"
+    <span className="inline-flex gap-1" onClick={stop}>
+      <Button
+        variant="secondary"
+        size={size}
+        className={cn(cls, 'rounded-full')}
         title={`Confirm — counts the planned ${fmtMinutes(b.plannedMin)}`}
+        aria-label="Confirm"
         onClick={() => void store.patch(b.id, { status: 'confirmed', actualMin: b.plannedMin })}
       >
         <Check size={12} />
-        Confirm
-      </button>
-      <button type="button" className="blk-act" title="Set the actual duration" onClick={() => onAdjust(b)}>
+        {!compact && 'Confirm'}
+      </Button>
+      <Button variant="secondary" size={size} className={cn(cls, 'rounded-full')} title="Set the actual duration" aria-label="Adjust" onClick={() => onAdjust(b)}>
         <Timer size={12} />
-        Adjust
-      </button>
-      <button
-        type="button"
-        className="blk-act blk-act-skip"
+        {!compact && 'Adjust'}
+      </Button>
+      <Button
+        variant="secondary"
+        size={size}
+        className={cn(cls, 'rounded-full')}
         title="Didn’t happen — not counted"
+        aria-label="Skip"
         onClick={() => void store.patch(b.id, { status: 'skipped', actualMin: null })}
       >
         <SkipForward size={12} />
-        Skip
-      </button>
+        {!compact && 'Skip'}
+      </Button>
     </span>
   );
 }
@@ -499,11 +489,13 @@ function PendingActions({ block: b, onAdjust }: { block: TimeBlock; onAdjust: (b
 function SideDay({
   date,
   todayKey,
+  nowMin,
   side,
   onClick,
 }: {
   date: DayKey;
   todayKey: DayKey;
+  nowMin: number;
   side: 'prev' | 'next';
   onClick: () => void;
 }) {
@@ -522,25 +514,35 @@ function SideDay({
             : 'Next day';
   const label = `${rel} · ${fmtMonthDay(d)}`;
   return (
-    <button type="button" className="side" data-side={side} onClick={onClick}>
-      <div className="side-title">{side === 'prev' ? `‹ ${label}` : `${label} ›`}</div>
+    <button
+      type="button"
+      className={cn('side group flex min-h-0 flex-col gap-2 overflow-hidden text-left', side === 'prev' ? 'pr-6' : 'pl-6')}
+      onClick={onClick}
+    >
+      <div className={cn('mb-1 text-xs text-muted-foreground group-hover:text-foreground', side === 'next' && 'text-right')}>
+        {side === 'prev' ? `‹ ${label}` : `${label} ›`}
+      </div>
       {blocks.length === 0 ? (
-        <div className="side-empty">Nothing planned</div>
+        <div className={cn('text-xs text-muted-foreground/50', side === 'next' && 'text-right')}>Nothing planned</div>
       ) : (
-        <ul className="side-list">
-          {blocks.slice(0, 9).map((b) => (
-            <li key={b.id} className="side-item" data-kind={b.kind} data-status={b.status}>
-              <span className="side-item-title">{title(b)}</span>
-              <span className="side-item-sub">
-                {b.startMin === null
-                  ? `Logged ${fmtMinutes(b.actualMin ?? b.plannedMin)}`
-                  : `${fmtHm(b.startMin)}–${fmtHm(b.endMin!)}`}{' '}
-                · {kindLabel(b)}
-                {b.status === 'planned' ? ' (planned)' : ''}
-              </span>
-            </li>
-          ))}
-          {blocks.length > 9 && <li className="side-more">+{blocks.length - 9} more</li>}
+        <ul className="flex flex-col gap-2 opacity-70 transition-opacity group-hover:opacity-100">
+          {blocks.slice(0, 7).map((b) => {
+            const st = displayStatus(b, todayKey, nowMin);
+            return (
+              <li key={b.id} className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-3 py-2">
+                <MarkBox kind={b.kind} status={st} size={28} />
+                <div className="min-w-0 flex-1">
+                  <div className={cn('truncate text-sm', (st === 'confirmed' || st === 'skipped') && 'text-muted-foreground', st === 'skipped' && 'line-through')}>
+                    {blockTitle(b)}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {b.startMin === null ? `Logged ${fmtMinutes(b.actualMin ?? b.plannedMin)}` : `${fmtHm(b.startMin)}–${fmtHm(b.endMin!)}`} · {kindLabel(b)}
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+          {blocks.length > 7 && <li className="px-3 text-xs text-muted-foreground">+{blocks.length - 7} more</li>}
         </ul>
       )}
     </button>

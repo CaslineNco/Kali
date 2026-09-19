@@ -1,13 +1,15 @@
-import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { CenterMorphModal, CenterMorphModalContent } from '@/components/motion/center-morph-modal';
+import { Tabs, TabsList, TabsTrigger } from '@/components/motion/tabs';
+import type { BlockKind } from '@/data/types';
 
-/** 通用浮层：半透明遮罩 + 居中卡片，Esc / 点遮罩关闭。 */
+/** 所有浮层共用的壳：beui Center Morph Modal（从中心展开），标题在左上。 */
 export function Dialog({
   open,
   onClose,
   title,
   children,
-  width = 380,
+  width = 400,
 }: {
   open: boolean;
   onClose: () => void;
@@ -15,66 +17,36 @@ export function Dialog({
   children: ReactNode;
   width?: number;
 }) {
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [open, onClose]);
-
   return (
-    <AnimatePresence>
-      {open && (
-        <motion.div
-          className="dlg-backdrop"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.15 }}
-          onPointerDown={(e) => {
-            if (e.target === e.currentTarget) onClose();
-          }}
-        >
-          <motion.div
-            className="dlg"
-            style={{ width }}
-            role="dialog"
-            aria-modal
-            aria-label={title}
-            initial={{ opacity: 0, scale: 0.96, y: 8 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.98, y: 4 }}
-            transition={{ type: 'spring', stiffness: 520, damping: 36, mass: 0.7 }}
-          >
-            <h2 className="dlg-title">{title}</h2>
-            {children}
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <CenterMorphModal open={open} onOpenChange={(o) => !o && onClose()}>
+      <CenterMorphModalContent ariaLabel={title} className="bg-card">
+        <div className="flex max-h-[calc(100vh-6rem)] flex-col overflow-y-auto p-6" style={{ width, maxWidth: '100%' }}>
+          <h2 className="mb-4 pr-8 text-base font-semibold text-foreground">{title}</h2>
+          {children}
+        </div>
+      </CenterMorphModalContent>
+    </CenterMorphModal>
   );
 }
 
-/** 专注 / 娱乐 二选一 */
-export function KindToggle({ value, onChange }: { value: 'focus' | 'fun'; onChange: (k: 'focus' | 'fun') => void }) {
+/** Focus / Leisure 二选一 = beui Tabs 的 segment 变体 */
+export function KindToggle({ value, onChange }: { value: BlockKind; onChange: (k: BlockKind) => void }) {
   return (
-    <div className="seg" role="radiogroup">
-      {(['focus', 'fun'] as const).map((k) => (
-        <button
-          key={k}
-          type="button"
-          role="radio"
-          aria-checked={value === k}
-          className="seg-item"
-          data-kind={k}
-          data-on={value === k}
-          onClick={() => onChange(k)}
-        >
-          {k === 'focus' ? 'Focus' : 'Leisure'}
-        </button>
-      ))}
-    </div>
+    <Tabs value={value} onValueChange={(v) => onChange(v as BlockKind)} variant="segment" className="w-fit">
+      <TabsList>
+        <TabsTrigger value="focus">Focus</TabsTrigger>
+        <TabsTrigger value="fun">Leisure</TabsTrigger>
+      </TabsList>
+    </Tabs>
+  );
+}
+
+/** 表单里带标签的一行（label 在上、控件在下），跟 beui Input 自带的 label 同一节奏 */
+export function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <label className="flex flex-col gap-1.5">
+      <span className="text-xs font-medium text-muted-foreground">{label}</span>
+      {children}
+    </label>
   );
 }

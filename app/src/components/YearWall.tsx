@@ -26,6 +26,8 @@ export interface YearWallProps {
   /** 本地「今天」 */
   today: Date;
   data: ReadonlyMap<DayKey, DaySummary>;
+  /** 每天排了几个计划块（未来日期的 tooltip 用） */
+  planned?: ReadonlyMap<DayKey, number>;
   thresholds?: readonly [number, number, number, number];
   onSelectDay?: (date: Date) => void;
 }
@@ -34,7 +36,7 @@ export interface YearWallProps {
  * 一整年的格子墙：beui Heat Calendar + 年份布局。
  * 单击一格 → 进那天；按住拖过几格 → 选一段范围，tooltip 显示这段的专注总时长（Figma 线稿标注的交互）。
  */
-export function YearWall({ year, today, data, thresholds = DEFAULT_THRESHOLDS, onSelectDay }: YearWallProps) {
+export function YearWall({ year, today, data, planned, thresholds = DEFAULT_THRESHOLDS, onSelectDay }: YearWallProps) {
   const endDate = useMemo(() => utcDay(year, 11, 31), [year]);
   const minDate = useMemo(() => utcDay(year, 0, 1), [year]);
   const todayUtc = useMemo(() => utcDay(today.getFullYear(), today.getMonth(), today.getDate()), [today]);
@@ -140,7 +142,17 @@ export function YearWall({ year, today, data, thresholds = DEFAULT_THRESHOLDS, o
                   </>
                 );
               }
-              const s = data.get(keyOfUtc(t.date));
+              const key = keyOfUtc(t.date);
+              if (t.date > todayUtc) {
+                const n = planned?.get(key) ?? 0;
+                return (
+                  <>
+                    <span className="text-muted-foreground">{fmtDayEn.format(t.date)}</span>
+                    <span>{n === 0 ? 'Nothing planned' : `${n} planned`}</span>
+                  </>
+                );
+              }
+              const s = data.get(key);
               return (
                 <>
                   <span className="text-muted-foreground">{fmtDayEn.format(t.date)}</span>
