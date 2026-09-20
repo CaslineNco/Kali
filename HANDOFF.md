@@ -140,6 +140,9 @@ Windows 桌面 App，Tauri + React。把一年的「专注」时间画成 GitHub
   - `day.css` 从 ~700 行减到 ~120 行，只剩三栏/刻度/定位几何；`.btn .seg .switch .field .form .dlg .blk-* .side-* .steps-*` 全删。日期输入框还是原生 `<input type=date>`（Tailwind 类套成药丸）。
   - 空白时段的说明文字换成悬停出现的 `+`；侧栏缩到 220px。`DurationDial` 加了 `size` prop（新建浮层里 176，装得下）。
 - **格子墙未来日期可点**（2026-09-19）：`heat-calendar/grid.tsx` 未来格子现在是真正的按钮（空心样式保留），`context.ts` 的 `validCell` 不再排除未来；tooltip 显示「N planned / Nothing planned」（`App.tsx` 算 `plannedByDay` 传给 `YearWall.planned`）。点进去就是那天的日程视图，可以排计划（未来日期没有 Log time）。
+- **无边框主窗口 + 悬浮窗收边**（2026-09-20，用户参考 Obsidian）：
+  - 主窗口 `decorations: false`，自绘标题栏 `components/TitleBar.tsx`（36px，App 同色，不跟 Windows 强调色；整条可拖、双击最大化、右侧最小化/最大化/关闭，关闭走 Rust 的 CloseRequested → 隐藏到托盘）。窗口边缘仍可拉伸（wry 自带）。
+  - 悬浮窗收边 `float/useDock.ts`：平时把窗口推到屏幕右缘外只露 28px 把手（竖排 "Today · 2 left · 20:16"）；**有事**（正在进行 / 到点待确认 / 10 分钟内要开始）或鼠标碰把手 → 弹出；没事 + 鼠标离开 4 秒 → 收回。头部有 📌 钉住按钮，钉住就不收。位置按 `currentMonitor()` 算，垂直居中。已在真实窗口验证（GetWindowRect：x = 屏宽 − 28）。
   - 下一步：**阶段 7** 设置页（颜色阈值、悬浮窗透明度、数据路径）→ 日历导入（ICS 订阅 / 文件）→ 阶段 8 缩放转场 → 阶段 9 本周固定安排 → 阶段 10 打磨。
 
 ## 接下来：分阶段实施计划

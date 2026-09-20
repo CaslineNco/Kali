@@ -1,7 +1,8 @@
 .app {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .page {
@@ -14,9 +15,8 @@
 
 /* 日程视图：整页锁在窗口高度里，时间轴在中间栏内部滚，操作栏固定在底部 */
 .page-day {
-  flex: 0 0 100vh;
+  flex: 1;
   min-height: 0;
-  height: 100vh;
   overflow: hidden;
   padding-bottom: 20px;
 }

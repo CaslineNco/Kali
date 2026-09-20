@@ -20,7 +20,9 @@
         "minWidth": 1100,
         "minHeight": 700,
         "center": true,
-        "label": "main"
+        "label": "main",
+        "decorations": false,
+        "shadow": true
       },
       {
         "label": "float",

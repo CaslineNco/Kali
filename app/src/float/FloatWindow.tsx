@@ -1,7 +1,8 @@
 import { emit } from '@tauri-apps/api/event';
 import { WebviewWindow } from '@tauri-apps/api/webviewWindow';
 import { AnimatePresence, motion } from 'motion/react';
-import { Check, Clock3, ExternalLink, RotateCcw, Trash2 } from 'lucide-react';
+import { Check, Clock3, ExternalLink, Pin, PinOff, RotateCcw, Trash2 } from 'lucide-react';
+import { TAB, useDock } from './useDock';
 import { useEffect, useMemo, useState } from 'react';
 import type { TodoItemStatus } from '@/components/agents/todo-list';
 import { MarkBox } from '@/components/day/BlockRow';
@@ -127,12 +128,36 @@ export function FloatWindow() {
 
   // Header: "Today · 08:42" and a one-line tally of done / left
   const clock = fmtHm(nowMin);
+
+  // 什么算"有事"：正在进行、到点没处理、或 10 分钟内要开始
+  const attention = rows.some(
+    (r) => r.actionable || (r.st === 'planned' && r.b.startMin! - nowMin >= 0 && r.b.startMin! - nowMin <= 10),
+  );
+  const dock = useDock(attention);
+  const next = rows.find((r) => r.st === 'planned' && r.b.startMin! > nowMin);
   const tally = rows.length === 0 ? 'Nothing planned yet' : `${done} done · ${open} left`;
 
   return (
-    <div className="flex h-screen w-full items-stretch justify-center">
+    <div className="flex h-screen w-full items-stretch" onPointerEnter={dock.onEnter} onPointerLeave={dock.onLeave}>
+      {/* 收边时只露这条把手：竖排的"Today · 2 left"，有事时变琥珀 */}
+      <button
+        type="button"
+        aria-label="Show today"
+        onClick={dock.expand}
+        className={`flex shrink-0 items-center justify-center self-center rounded-l-2xl border border-r-0 text-[11px] font-semibold tracking-wide transition-opacity ${
+          dock.docked ? 'opacity-100' : 'pointer-events-none opacity-0'
+        } ${attention ? 'border-amber/60 bg-amber/15 text-amber' : 'border-border bg-card text-muted-foreground'}`}
+        style={{ width: TAB, height: 180, writingMode: 'vertical-rl', transform: 'rotate(180deg)' }}
+      >
+        {open > 0 ? `${open} left` : 'Today'}
+        {next ? ` · ${fmtHm(next.b.startMin!)}` : ''}
+      </button>
       {/* beui preview card, verbatim: rounded-[2rem] shell, header row, list, footer row */}
-      <div className="flex w-full max-w-sm flex-col rounded-[2rem] border border-border bg-background p-3 shadow-2xl">
+      <div
+        className={`flex min-w-0 flex-1 flex-col rounded-[2rem] border border-border bg-background p-3 shadow-2xl transition-opacity ${
+          dock.docked ? 'pointer-events-none opacity-0' : 'opacity-100'
+        }`}
+      >
         <div className="mb-3 flex items-center justify-between px-1" data-tauri-drag-region>
           <div data-tauri-drag-region>
             <p className="text-sm font-semibold text-foreground" data-tauri-drag-region>
@@ -142,14 +167,25 @@ export function FloatWindow() {
               {tally}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => void openDay()}
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            Open
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              aria-label={dock.pinned ? 'Unpin (auto-hide at the edge)' : 'Pin (stay open)'}
+              title={dock.pinned ? 'Unpin — hides at the edge when idle' : 'Pin — stays open'}
+              onClick={() => dock.setPinned(!dock.pinned)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {dock.pinned ? <Pin className="h-3.5 w-3.5" /> : <PinOff className="h-3.5 w-3.5" />}
+            </button>
+            <button
+              type="button"
+              onClick={() => void openDay()}
+              className="inline-flex h-8 items-center gap-1.5 rounded-full border border-border px-3 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              Open
+            </button>
+          </div>
         </div>
 
         <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto">

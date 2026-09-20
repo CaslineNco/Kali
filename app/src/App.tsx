@@ -8,6 +8,7 @@ import { DayView } from './components/day/DayView';
 import { DevPanel } from './components/DevPanel';
 import { SettingsDialog } from './components/SettingsDialog';
 import { SpinningCounter } from './components/ui/SpinningCounter';
+import { TitleBar } from './components/TitleBar';
 import { YearWall } from './components/YearWall';
 import { useYearSummary } from './data/store';
 import { displayStatus } from './data/types';
@@ -84,6 +85,7 @@ function App() {
 
   return (
     <main className="app">
+      <TitleBar title="Kali" />
       <AnimatePresence mode="wait" initial={false}>
         {view.kind === 'wall' ? (
           <motion.div
