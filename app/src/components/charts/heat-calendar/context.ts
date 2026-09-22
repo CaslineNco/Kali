@@ -4,7 +4,7 @@ import { useReducedMotion } from "motion/react";
 import { createContext, useContext, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useHoverCapable } from "@/lib/hooks/use-hover-capable";
 import type { HeatCalendarCell, HeatCalendarProps, HeatCalendarSelection } from "./types";
-import { addDays, CELL, FILLS, fmtMonth, GAP, MONTH_ROW, mondayOf, PITCH, startOfDay } from "./utils";
+import { addDays, CELL, FILLS, GAP, makeFormats, MONTH_ROW, mondayOf, PITCH, startOfDay } from "./utils";
 
 /**
  * Weeks of activity as a single-hue grid with month labels, so
@@ -26,12 +26,15 @@ export function useHeatCalendarModel({
   endDate,
   today: todayProp,
   minDate,
+  locale = "en-US",
+  labels = { upcoming: "upcoming", less: "less", more: "more" },
   selection: controlledSelection,
   defaultSelection = null,
   onSelectionChange,
 }: HeatCalendarProps) {
   const reduce = useReducedMotion();
   const canHover = useHoverCapable();
+  const fmt = useMemo(() => makeFormats(locale), [locale]);
   const [storedHover, setHover] = useState<HeatCalendarCell | null>(null);
   const [internalSelection, setInternalSelection] = useState(defaultSelection);
   const requestedSelection = controlledSelection === undefined ? internalSelection : controlledSelection;
@@ -101,11 +104,11 @@ export function useHeatCalendarModel({
       const m = date ? date.getUTCMonth() : -1;
       const fresh =
         start !== null && date !== null && (w === 0 || addDays(start, (w - 1) * 7).getUTCMonth() !== m);
-      return { id: `w${w}`, w, m, label: fresh && date ? fmtMonth.format(date) : null };
+      return { id: `w${w}`, w, m, label: fresh && date ? fmt.month.format(date) : null };
     });
     if (list[1]?.label || list[2]?.label) list[0].label = null;
     return list;
-  }, [start, weeks]);
+  }, [start, weeks, fmt]);
 
   // one click anchors a span and dims everything else; hovering then previews
   // the run from the anchor to the pointer and totals it live, and a second
@@ -197,6 +200,8 @@ export function useHeatCalendarModel({
     tooltip,
     selection,
     setSelection,
+    fmt,
+    labels,
   };
 }
 

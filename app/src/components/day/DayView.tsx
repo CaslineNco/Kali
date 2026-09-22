@@ -7,7 +7,8 @@ import { Button } from '@/components/motion/button/base';
 import { ExpandableActionBar } from '@/components/motion/expandable-action-bar';
 import { blocks as store, useBlocksOfDay } from '@/data/store';
 import { creditedMinutes, displayStatus, type DisplayStatus, type TimeBlock } from '@/data/types';
-import { addDays, fmtDateTitle, fmtHm, fmtMinutes, fmtMonthDay, fromKey, nowMinutes, toKey, type DayKey } from '@/lib/date';
+import { addDays, fmtHm, fmtMinutes, fromKey, nowMinutes, toKey, type DayKey } from '@/lib/date';
+import { fmtDateTitle, fmtMonthDay, useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { AdjustDialog } from './AdjustDialog';
 import { BackfillDialog, type BackfillDraft } from './BackfillDialog';
@@ -40,6 +41,7 @@ export function DayView({
   onChangeDate: (next: DayKey) => void;
   onBack: () => void;
 }) {
+  const { t, locale } = useT();
   const now = useNow();
   const todayKey = toKey(now);
   const nowMin = nowMinutes(now);
@@ -60,10 +62,10 @@ export function DayView({
   const remove = async (b: TimeBlock) => {
     await store.remove(b.id);
     showToast({
-      title: `Deleted “${blockTitle(b)}”`,
+      title: t.deleted(blockTitle(b, t)),
       status: 'neutral',
       action: {
-        label: 'Undo',
+        label: t.undo,
         onClick: (t) => {
           void store.restore(b.id);
           dismissToast(t.id);
@@ -97,23 +99,23 @@ export function DayView({
   const actions = [
     ...(isPast
       ? []
-      : [{ id: 'new', label: 'New block', icon: <CalendarPlus className="h-4 w-4" />, onClick: () => setDraft({ date }) }]),
+      : [{ id: 'new', label: t.newBlock, icon: <CalendarPlus className="h-4 w-4" />, onClick: () => setDraft({ date }) }]),
     ...(date > todayKey
       ? []
-      : [{ id: 'backfill', label: 'Log time', icon: <PenLine className="h-4 w-4" />, onClick: () => setBackfill({ date }) }]),
+      : [{ id: 'backfill', label: t.logTime, icon: <PenLine className="h-4 w-4" />, onClick: () => setBackfill({ date }) }]),
   ];
 
   return (
     <div className="day">
       <header className="flex flex-col gap-1">
         <Button variant="ghost" size="sm" className="-ml-2 h-7 w-fit px-2 text-xs" onClick={onBack}>
-          ‹ Back to the year
+          {t.backToYear}
         </Button>
         <div className="flex items-baseline gap-6">
-          <h1 className="text-[26px] font-semibold leading-8 tracking-tight text-foreground">{fmtDateTitle(day)}</h1>
+          <h1 className="text-[26px] font-semibold leading-8 tracking-tight text-foreground">{fmtDateTitle(day, locale)}</h1>
           <span className="text-sm text-muted-foreground">
-            Focus {fmtMinutes(totals.focus)} · Leisure {fmtMinutes(totals.fun)}
-            {pendingCount > 0 && <span className="text-destructive"> · {pendingCount} to confirm</span>}
+            {t.focus} {fmtMinutes(totals.focus)} · {t.leisure} {fmtMinutes(totals.fun)}
+            {pendingCount > 0 && <span className="text-destructive"> · {t.toConfirm(pendingCount)}</span>}
           </span>
         </div>
       </header>
@@ -183,6 +185,7 @@ function Timeline({
   onOpen: (b: TimeBlock) => void;
   onAdjust: (b: TimeBlock) => void;
 }) {
+  const { t } = useT();
   const untimed = blocks.filter((b) => b.startMin === null);
 
   // 默认 07:00–20:00，有块超出就把轴拉长；今天至少画到"现在"
@@ -217,7 +220,7 @@ function Timeline({
               <button
                 type="button"
                 className="tl-slot group"
-                aria-label={`${h}:00 ${isPast ? 'log time' : 'new block'}`}
+                aria-label={`${h}:00 ${isPast ? t.logTimeAt : t.newBlockAt}`}
                 onClick={() => onSlot(h * 60)}
               >
                 {/* 悬停空白时段时出现的加号，代替说明文字 */}
@@ -255,7 +258,7 @@ function Timeline({
               className="tl-now-badge border-destructive bg-destructive font-semibold text-background"
               contentKey={fmtHm(nowMin)}
             >
-              Now {fmtHm(nowMin)}
+              {t.now} {fmtHm(nowMin)}
             </AnimatedBadge>
           </div>
         )}
@@ -270,7 +273,7 @@ function Timeline({
               className="blk w-full rounded-xl border border-border bg-card px-4 py-3 text-left"
               onClick={() => onOpen(b)}
             >
-              <BlockRow block={b} status={b.status} description={`Logged ${fmtMinutes(b.actualMin ?? b.plannedMin)} · ${kindLabel(b)}`} />
+              <BlockRow block={b} status={b.status} description={`${t.logged} ${fmtMinutes(b.actualMin ?? b.plannedMin)} · ${kindLabel(b, t)}`} />
             </button>
           ))}
         </div>
@@ -343,6 +346,7 @@ function Block({
   onOpen: (b: TimeBlock) => void;
   onAdjust: (b: TimeBlock) => void;
 }) {
+  const { t } = useT();
   const density = height >= 64 ? 'full' : height >= 36 ? 'one' : 'tight';
   const w = 100 / lanes;
   const duration = b.endMin! - b.startMin!;
@@ -391,7 +395,7 @@ function Block({
       <PendingActions block={b} onAdjust={onAdjust} compact={density !== 'full'} />
     ) : running && progress !== undefined ? (
       <AnimatedBadge status="warning" size="sm" showIcon={false} contentKey={progress}>
-        Now · {progress}%
+        {t.now} · {progress}%
       </AnimatedBadge>
     ) : (
       <StatusBadge status={status} />
@@ -427,7 +431,7 @@ function Block({
     >
       {density === 'tight' ? (
         <div className="flex h-full items-center gap-2 text-xs">
-          <span className={cn('truncate', status === 'skipped' && 'line-through text-muted-foreground')}>{blockTitle(b)}</span>
+          <span className={cn('truncate', status === 'skipped' && 'line-through text-muted-foreground')}>{blockTitle(b, t)}</span>
           <span className="ml-auto shrink-0 text-muted-foreground">{range}</span>
         </div>
       ) : (
@@ -437,9 +441,9 @@ function Block({
           running={running}
           progress={progress}
           compact={density === 'one'}
-          description={`${range} · ${kindLabel(b)}${
-            status === 'confirmed' && b.actualMin !== null && b.actualMin !== b.plannedMin ? ` · actual ${fmtMinutes(b.actualMin)}` : ''
-          }${b.steps.length ? ` · ${b.steps.filter((s) => s.done).length}/${b.steps.length} steps` : ''}`}
+          description={`${range} · ${kindLabel(b, t)}${
+            status === 'confirmed' && b.actualMin !== null && b.actualMin !== b.plannedMin ? ` · ${t.actual} ${fmtMinutes(b.actualMin)}` : ''
+          }${b.steps.length ? ` · ${b.steps.filter((s) => s.done).length}/${b.steps.length} ${t.steps}` : ''}`}
           trailing={trailing}
         />
       )}
@@ -449,6 +453,7 @@ function Block({
 
 /** 待确认块的三个操作：确认（按计划时长计入）/ 改时长 / 跳过（不计入）。常显；矮块只留图标。 */
 function PendingActions({ block: b, onAdjust, compact }: { block: TimeBlock; onAdjust: (b: TimeBlock) => void; compact?: boolean }) {
+  const { t } = useT();
   const stop = (e: MouseEvent) => e.stopPropagation();
   const cls = compact ? 'h-7 w-7' : 'h-7 px-2.5 text-[11px]';
   const size = compact ? 'icon' : 'sm';
@@ -458,27 +463,27 @@ function PendingActions({ block: b, onAdjust, compact }: { block: TimeBlock; onA
         variant="secondary"
         size={size}
         className={cn(cls, 'rounded-full')}
-        title={`Confirm — counts the planned ${fmtMinutes(b.plannedMin)}`}
-        aria-label="Confirm"
+        title={t.confirmTitle(fmtMinutes(b.plannedMin))}
+        aria-label={t.confirm}
         onClick={() => void store.patch(b.id, { status: 'confirmed', actualMin: b.plannedMin })}
       >
         <Check size={12} />
-        {!compact && 'Confirm'}
+        {!compact && t.confirm}
       </Button>
-      <Button variant="secondary" size={size} className={cn(cls, 'rounded-full')} title="Set the actual duration" aria-label="Adjust" onClick={() => onAdjust(b)}>
+      <Button variant="secondary" size={size} className={cn(cls, 'rounded-full')} title={t.adjustTitle} aria-label={t.adjust} onClick={() => onAdjust(b)}>
         <Timer size={12} />
-        {!compact && 'Adjust'}
+        {!compact && t.adjust}
       </Button>
       <Button
         variant="secondary"
         size={size}
         className={cn(cls, 'rounded-full')}
-        title="Didn’t happen — not counted"
-        aria-label="Skip"
+        title={t.skipTitle}
+        aria-label={t.skip}
         onClick={() => void store.patch(b.id, { status: 'skipped', actualMin: null })}
       >
         <SkipForward size={12} />
-        {!compact && 'Skip'}
+        {!compact && t.skip}
       </Button>
     </span>
   );
@@ -499,20 +504,21 @@ function SideDay({
   side: 'prev' | 'next';
   onClick: () => void;
 }) {
+  const { t, locale } = useT();
   const blocks = useBlocksOfDay(date);
   const d = fromKey(date);
   const today = fromKey(todayKey);
   const rel =
     date === toKey(addDays(today, -1))
-      ? 'Yesterday'
+      ? t.yesterday
       : date === todayKey
-        ? 'Today'
+        ? t.today
         : date === toKey(addDays(today, 1))
-          ? 'Tomorrow'
+          ? t.tomorrow
           : side === 'prev'
-            ? 'Previous day'
-            : 'Next day';
-  const label = `${rel} · ${fmtMonthDay(d)}`;
+            ? t.previousDay
+            : t.nextDay;
+  const label = `${rel} · ${fmtMonthDay(d, locale)}`;
   return (
     <button
       type="button"
@@ -523,7 +529,7 @@ function SideDay({
         {side === 'prev' ? `‹ ${label}` : `${label} ›`}
       </div>
       {blocks.length === 0 ? (
-        <div className={cn('text-xs text-muted-foreground/50', side === 'next' && 'text-right')}>Nothing planned</div>
+        <div className={cn('text-xs text-muted-foreground/50', side === 'next' && 'text-right')}>{t.nothingPlanned}</div>
       ) : (
         <ul className="flex flex-col gap-2 opacity-70 transition-opacity group-hover:opacity-100">
           {blocks.slice(0, 7).map((b) => {
@@ -533,16 +539,16 @@ function SideDay({
                 <MarkBox kind={b.kind} status={st} size={28} />
                 <div className="min-w-0 flex-1">
                   <div className={cn('truncate text-sm', (st === 'confirmed' || st === 'skipped') && 'text-muted-foreground', st === 'skipped' && 'line-through')}>
-                    {blockTitle(b)}
+                    {blockTitle(b, t)}
                   </div>
                   <div className="truncate text-xs text-muted-foreground">
-                    {b.startMin === null ? `Logged ${fmtMinutes(b.actualMin ?? b.plannedMin)}` : `${fmtHm(b.startMin)}–${fmtHm(b.endMin!)}`} · {kindLabel(b)}
+                    {b.startMin === null ? `${t.logged} ${fmtMinutes(b.actualMin ?? b.plannedMin)}` : `${fmtHm(b.startMin)}–${fmtHm(b.endMin!)}`} · {kindLabel(b, t)}
                   </div>
                 </div>
               </li>
             );
           })}
-          {blocks.length > 7 && <li className="px-3 text-xs text-muted-foreground">+{blocks.length - 7} more</li>}
+          {blocks.length > 7 && <li className="px-3 text-xs text-muted-foreground">{t.more(blocks.length - 7)}</li>}
         </ul>
       )}
     </button>

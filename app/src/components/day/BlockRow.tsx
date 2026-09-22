@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { TodoStatusIcon, type TodoItemStatus } from '@/components/agents/todo-list';
 import { AnimatedBadge, type AnimatedBadgeStatus } from '@/components/motion/animated-badge';
 import type { DisplayStatus, TimeBlock } from '@/data/types';
+import { useT, type Dict } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /**
@@ -11,15 +12,10 @@ import { cn } from '@/lib/utils';
  * 表面统一 rounded-xl border-border bg-card；不再有实心/虚线/淡色的变体。
  */
 
-export const kindLabel = (b: Pick<TimeBlock, 'kind'>) => (b.kind === 'focus' ? 'Focus' : 'Leisure');
-export const blockTitle = (b: Pick<TimeBlock, 'kind' | 'note'>) => b.note || kindLabel(b);
+export const kindLabel = (b: Pick<TimeBlock, 'kind'>, t: Dict) => (b.kind === 'focus' ? t.focus : t.leisure);
+export const blockTitle = (b: Pick<TimeBlock, 'kind' | 'note'>, t: Dict) => b.note || kindLabel(b, t);
 
-export const STATUS_LABEL: Record<DisplayStatus, string> = {
-  planned: 'Planned',
-  pending: 'Confirm?',
-  confirmed: 'Confirmed',
-  skipped: 'Skipped',
-};
+export const statusLabel = (status: DisplayStatus, t: Dict) => t[status];
 
 export const BADGE_STATUS: Record<DisplayStatus, AnimatedBadgeStatus> = {
   planned: 'neutral',
@@ -63,9 +59,10 @@ export function MarkBox({
 }
 
 export function StatusBadge({ status, children }: { status: DisplayStatus; children?: ReactNode }) {
+  const { t } = useT();
   return (
     <AnimatedBadge status={BADGE_STATUS[status]} size="sm" showIcon={false} contentKey={status}>
-      {children ?? STATUS_LABEL[status]}
+      {children ?? statusLabel(status, t)}
     </AnimatedBadge>
   );
 }
@@ -93,6 +90,7 @@ export function BlockRow({
   compact?: boolean;
   className?: string;
 }) {
+  const { t } = useT();
   return (
     <div className={cn('flex min-w-0 items-center gap-3', className)}>
       {!compact && <MarkBox kind={block.kind} status={status} running={running} progress={progress} />}
@@ -104,7 +102,7 @@ export function BlockRow({
             status === 'skipped' && 'line-through',
           )}
         >
-          {blockTitle(block)}
+          {blockTitle(block, t)}
           {compact && <span className="font-normal text-muted-foreground"> · {description}</span>}
         </div>
         {!compact && <div className="mt-0.5 truncate text-xs text-muted-foreground">{description}</div>}

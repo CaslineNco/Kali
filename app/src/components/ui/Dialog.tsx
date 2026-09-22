@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { CenterMorphModal, CenterMorphModalContent } from '@/components/motion/center-morph-modal';
 import { Tabs, TabsList, TabsTrigger } from '@/components/motion/tabs';
 import type { BlockKind } from '@/data/types';
+import { useT } from '@/lib/i18n';
 
 /** 所有浮层共用的壳：beui Center Morph Modal（从中心展开），标题在左上。 */
 export function Dialog({
@@ -31,11 +32,12 @@ export function Dialog({
 
 /** Focus / Leisure 二选一 = beui Tabs 的 segment 变体 */
 export function KindToggle({ value, onChange }: { value: BlockKind; onChange: (k: BlockKind) => void }) {
+  const { t } = useT();
   return (
     <Tabs value={value} onValueChange={(v) => onChange(v as BlockKind)} variant="segment" className="w-fit">
       <TabsList>
-        <TabsTrigger value="focus">Focus</TabsTrigger>
-        <TabsTrigger value="fun">Leisure</TabsTrigger>
+        <TabsTrigger value="focus">{t.focus}</TabsTrigger>
+        <TabsTrigger value="fun">{t.leisure}</TabsTrigger>
       </TabsList>
     </Tabs>
   );

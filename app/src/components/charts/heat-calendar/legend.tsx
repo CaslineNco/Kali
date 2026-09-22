@@ -2,14 +2,14 @@
 
 import { cn } from "@/lib/utils";
 import { useHeatCalendar } from "./context";
-import { fmtRange, FUTURE, STEPS } from "./utils";
+import { FUTURE, STEPS } from "./utils";
 
 export function HeatCalendarLegend({ className }: { className?: string }) {
-  const { start, end, floor, step, setStep, fill, canHover, reduce } = useHeatCalendar();
+  const { start, end, floor, step, setStep, fill, canHover, reduce, fmt, labels } = useHeatCalendar();
   return (
     <div className={cn("mt-3 flex flex-wrap items-center justify-between gap-3", className)}>
       <span className="text-xs text-muted-foreground">
-        {start && end ? `${fmtRange.format(floor ?? start)} – ${fmtRange.format(end)}` : "\u00a0"}
+        {start && end ? `${fmt.range.format(floor ?? start)} – ${fmt.range.format(end)}` : "\u00a0"}
       </span>
       {/* hovering a step keeps only cells of that level lit, so the legend doubles as a filter */}
       <span className="flex items-center gap-1" onPointerLeave={() => setStep(null)}>
@@ -17,8 +17,8 @@ export function HeatCalendarLegend({ className }: { className?: string }) {
           className="size-3 rounded-[3px]"
           style={{ background: FUTURE, boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--border) 60%, transparent)" }}
         />
-        <span className="mr-2 text-xs text-muted-foreground">upcoming</span>
-        <span className="mr-0.5 text-xs text-muted-foreground">less</span>
+        <span className="mr-2 text-xs text-muted-foreground">{labels.upcoming}</span>
+        <span className="mr-0.5 text-xs text-muted-foreground">{labels.less}</span>
         {STEPS.map((s, i) => (
           <button
             type="button"
@@ -35,7 +35,7 @@ export function HeatCalendarLegend({ className }: { className?: string }) {
             style={{ background: fill(i), transform: !reduce && step === i ? "scale(1.25)" : undefined }}
           />
         ))}
-        <span className="ml-0.5 text-xs text-muted-foreground">more</span>
+        <span className="ml-0.5 text-xs text-muted-foreground">{labels.more}</span>
       </span>
     </div>
   );

@@ -4,6 +4,7 @@ import { Button } from '@/components/motion/button/base';
 import { Checkbox } from '@/components/motion/checkbox';
 import { Input } from '@/components/motion/input';
 import type { Step } from '@/data/types';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /**
@@ -11,6 +12,7 @@ import { cn } from '@/lib/utils';
  * 只是给自己看的进度，不影响时长、不影响格子颜色。
  */
 export function StepsEditor({ steps, onChange }: { steps: Step[]; onChange: (steps: Step[]) => void }) {
+  const { t } = useT();
   const [draft, setDraft] = useState('');
 
   const add = () => {
@@ -25,7 +27,7 @@ export function StepsEditor({ steps, onChange }: { steps: Step[]; onChange: (ste
 
   return (
     <div className="flex flex-col gap-2">
-      <span className="text-xs font-medium text-muted-foreground">Steps{steps.length ? ` · ${done}/${steps.length}` : ''}</span>
+      <span className="text-xs font-medium text-muted-foreground">{t.stepsLabel}{steps.length ? ` · ${done}/${steps.length}` : ''}</span>
       {steps.length > 0 && (
         <ol className="flex flex-col gap-1">
           {steps.map((s, i) => (
@@ -41,7 +43,7 @@ export function StepsEditor({ steps, onChange }: { steps: Step[]; onChange: (ste
                 onChange={(e) => update(i, { text: e.target.value })}
                 maxLength={120}
               />
-              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" aria-label="Remove step" onClick={() => remove(i)}>
+              <Button type="button" variant="ghost" size="icon" className="h-7 w-7" aria-label={t.removeStep} onClick={() => remove(i)}>
                 <X size={12} />
               </Button>
             </li>
@@ -50,7 +52,7 @@ export function StepsEditor({ steps, onChange }: { steps: Step[]; onChange: (ste
       )}
       <div className="flex items-center gap-2">
         <Input
-          placeholder={steps.length ? 'Another step…' : 'First concrete action, e.g. “Open last week’s draft”'}
+          placeholder={steps.length ? t.stepAnother : t.stepFirst}
           value={draft}
           onChange={setDraft}
           onKeyDown={(e) => {
@@ -62,7 +64,7 @@ export function StepsEditor({ steps, onChange }: { steps: Step[]; onChange: (ste
           maxLength={120}
           className="flex-1"
         />
-        <Button type="button" variant="secondary" size="icon" aria-label="Add step" onClick={add} disabled={!draft.trim()}>
+        <Button type="button" variant="secondary" size="icon" aria-label={t.addStep} onClick={add} disabled={!draft.trim()}>
           <Plus size={14} />
         </Button>
       </div>

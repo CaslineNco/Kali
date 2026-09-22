@@ -6,6 +6,7 @@ import { DurationDial } from '@/components/ui/DurationDial';
 import { blocks } from '@/data/store';
 import type { BlockKind, TimeBlock } from '@/data/types';
 import { toKey, type DayKey } from '@/lib/date';
+import { useT } from '@/lib/i18n';
 
 export interface BackfillDraft {
   date: DayKey;
@@ -23,8 +24,9 @@ export function BackfillDialog({
   onClose: () => void;
   onDelete?: (b: TimeBlock) => void;
 }) {
+  const { t } = useT();
   return (
-    <Dialog open={draft !== null} onClose={onClose} title={draft?.existing ? 'Edit log' : 'Log time'}>
+    <Dialog open={draft !== null} onClose={onClose} title={draft?.existing ? t.editLog : t.logTime}>
       {draft && <BackfillForm draft={draft} onClose={onClose} onDelete={onDelete} />}
     </Dialog>
   );
@@ -39,6 +41,7 @@ function BackfillForm({
   onClose: () => void;
   onDelete?: (b: TimeBlock) => void;
 }) {
+  const { t } = useT();
   const ex = draft.existing;
   const [day, setDay] = useState<DayKey>(ex?.date ?? draft.date);
   const [kind, setKind] = useState<BlockKind>(ex?.kind ?? 'focus');
@@ -73,7 +76,7 @@ function BackfillForm({
       }}
     >
       <div className="flex items-end justify-between gap-3">
-        <Field label="Date">
+        <Field label={t.date}>
           <input
             type="date"
             className="h-10 rounded-full border border-border bg-card px-4 text-sm text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/40 [color-scheme:dark]"
@@ -86,9 +89,9 @@ function BackfillForm({
         <KindToggle value={kind} onChange={setKind} />
       </div>
       <DurationDial value={minutes} onChange={setMinutes} />
-      <Input label="What (optional)" placeholder="e.g. Reading" value={note} onChange={setNote} maxLength={80} />
+      <Input label={t.what} placeholder={t.logPlaceholder} value={note} onChange={setNote} maxLength={80} />
       {!ex && (
-        <p className="text-xs text-muted-foreground">Logs time after the fact — skips planning and confirmation, counts immediately.</p>
+        <p className="text-xs text-muted-foreground">{t.logHint}</p>
       )}
       <div className="flex items-center gap-2 pt-1">
         {ex && onDelete && (
@@ -102,15 +105,15 @@ function BackfillForm({
               onClose();
             }}
           >
-            Delete
+            {t.delete}
           </Button>
         )}
         <span className="flex-1" />
         <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-          Cancel
+          {t.cancel}
         </Button>
         <Button type="submit" variant="primary" size="sm" disabled={!valid || saving}>
-          Save
+          {t.save}
         </Button>
       </div>
     </form>

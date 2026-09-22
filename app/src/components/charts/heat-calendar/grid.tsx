@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { EASE_OUT, SPRING_PRESS } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 import { useHeatCalendar } from "./context";
-import { DAYS, fmtDay, FUTURE, GAP, LIFT, MONTH_ROW, PITCH } from "./utils";
+import { DAYS, FUTURE, GAP, LIFT, MONTH_ROW, PITCH } from "./utils";
 
 export function HeatCalendarGrid({ children, className }: { children?: ReactNode; className?: string }) {
   const {
@@ -33,6 +33,8 @@ export function HeatCalendarGrid({ children, className }: { children?: ReactNode
     gridRef,
     tooltipId,
     unit,
+    fmt,
+    labels,
   } = useHeatCalendar();
   return (
     <div
@@ -96,7 +98,7 @@ export function HeatCalendarGrid({ children, className }: { children?: ReactNode
                     cannot steal a click either */}
               <motion.button
                 type="button"
-                aria-label={`${isFuture ? "upcoming" : `${count(v)} ${unit}`}${date ? ` on ${fmtDay.format(date)}` : ""}`}
+                aria-label={`${isFuture ? labels.upcoming : `${count(v)} ${unit}`}${date ? ` · ${fmt.day.format(date)}` : ""}`}
                 data-heat-cell={`${w}-${d}`}
                 data-future={isFuture || undefined}
                 aria-pressed={isEnd}

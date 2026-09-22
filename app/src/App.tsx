@@ -13,6 +13,7 @@ import { YearWall } from './components/YearWall';
 import { useYearSummary } from './data/store';
 import { displayStatus } from './data/types';
 import { nowMinutes, startOfDay, toKey, type DayKey } from './lib/date';
+import { useT } from './lib/i18n';
 
 type View = { kind: 'wall' } | { kind: 'day'; date: DayKey };
 
@@ -30,6 +31,10 @@ function App() {
   const { summary: data, blocks: all, error } = useYearSummary(year);
   const [view, setView] = useState<View>({ kind: 'wall' });
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const { t, locale } = useT();
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   // 悬浮窗点了某一行 → 跳到那天的日程视图
   useEffect(() => {
@@ -104,7 +109,7 @@ function App() {
                     <span className="wall-hours">
                       <SpinningCounter value={totalFocusMin / 60} cell={28} />h
                     </span>{' '}
-                    focused · <span className="wall-leisure">{Math.round(totals.fun / 60)}h</span> leisure
+                    {t.focused} · <span className="wall-leisure">{Math.round(totals.fun / 60)}h</span> {t.leisureTotal}
                   </span>
                 </h1>
                 {pendingCount > 0 && (
@@ -112,10 +117,10 @@ function App() {
                     variant="outline"
                     size="sm"
                     className="border-destructive/40 text-destructive hover:bg-destructive/10"
-                    title="Go to the latest day with unconfirmed blocks"
+                    title={t.toConfirmTitle}
                     onClick={() => setView({ kind: 'day', date: pendingDates[0] })}
                   >
-                    {pendingCount} to confirm
+                    {t.toConfirm(pendingCount)}
                   </Button>
                 )}
               </header>
@@ -128,15 +133,15 @@ function App() {
               />
               {all.length === 0 && !error && (
                 <p className="wall-empty">
-                  Nothing logged yet.{' '}
+                  {t.nothingLogged}{' '}
                   <button
                     type="button"
                     className="cursor-pointer border-0 bg-transparent p-0 font-[inherit] text-amber underline underline-offset-4"
                     onClick={() => setView({ kind: 'day', date: todayKey })}
                   >
-                    Open today
+                    {t.openToday}
                   </button>{' '}
-                  and plan the first block.
+                  {t.planFirst}
                 </p>
               )}
             </div>
@@ -144,8 +149,8 @@ function App() {
               variant="secondary"
               size="icon"
               className="fixed bottom-6 right-6 text-muted-foreground hover:text-foreground"
-              aria-label="Settings"
-              title="Settings"
+              aria-label={t.settings}
+              title={t.settings}
               onClick={() => setSettingsOpen(true)}
             >
               <Settings size={16} />
@@ -172,7 +177,7 @@ function App() {
       <SettingsDialog open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       {error && (
         <div className="db-error" role="alert">
-          Couldn’t open the database: {error}. Fix the problem and restart the app.
+          {t.dbError(error)}
         </div>
       )}
       {dev && <DevPanel year={year} all={all} />}

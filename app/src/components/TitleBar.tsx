@@ -1,6 +1,7 @@
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { Minus, Square, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 const inTauri = () => '__TAURI_INTERNALS__' in window;
@@ -11,6 +12,7 @@ const inTauri = () => '__TAURI_INTERNALS__' in window;
  */
 export function TitleBar({ title }: { title: string }) {
   const [maximized, setMaximized] = useState(false);
+  const { t } = useT();
 
   useEffect(() => {
     if (!inTauri()) return;
@@ -34,13 +36,13 @@ export function TitleBar({ title }: { title: string }) {
         {title}
       </span>
       <div className="flex h-full">
-        <Ctl label="Minimize" onClick={() => void win()?.minimize()}>
+        <Ctl label={t.minimize} onClick={() => void win()?.minimize()}>
           <Minus size={14} />
         </Ctl>
-        <Ctl label={maximized ? 'Restore' : 'Maximize'} onClick={() => void win()?.toggleMaximize()}>
+        <Ctl label={maximized ? t.restore : t.maximize} onClick={() => void win()?.toggleMaximize()}>
           {maximized ? <RestoreIcon /> : <Square size={11} />}
         </Ctl>
-        <Ctl label="Close" danger onClick={() => void win()?.close()}>
+        <Ctl label={t.closeWindow} danger onClick={() => void win()?.close()}>
           <X size={14} />
         </Ctl>
       </div>

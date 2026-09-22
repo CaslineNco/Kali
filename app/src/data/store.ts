@@ -52,6 +52,18 @@ if (inTauri) {
   });
 }
 
+const settingsCache = new Map<string, string | null>();
+
+// 设置也要跨窗口同步（语言、透明度这类悬浮窗也用的）
+const SETTING_CHANGED = 'kali:setting-changed';
+if (inTauri) {
+  void listen<{ from: string; key: string; value: string }>(SETTING_CHANGED, (e) => {
+    if (e.payload.from === WIN_ID) return;
+    settingsCache.set(e.payload.key, e.payload.value);
+    notify();
+  });
+}
+
 const yearOf = (date: DayKey) => Number(date.slice(0, 4));
 
 const sortDay = (list: TimeBlock[]) =>
@@ -166,8 +178,7 @@ export const blocks = {
   get: findById,
 };
 
-/** 本地设置（API key 等）：读一次进内存，写了就通知 */
-const settingsCache = new Map<string, string | null>();
+/** 本地设置：读一次进内存，写了就通知 */
 export const settings = {
   async get(key: string) {
     if (!settingsCache.has(key)) settingsCache.set(key, await (await getRepo()).getSetting(key));
@@ -177,6 +188,7 @@ export const settings = {
     await (await getRepo()).setSetting(key, value);
     settingsCache.set(key, value);
     notify();
+    if (inTauri) void emit(SETTING_CHANGED, { from: WIN_ID, key, value });
   },
   peek(key: string) {
     return settingsCache.get(key) ?? null;

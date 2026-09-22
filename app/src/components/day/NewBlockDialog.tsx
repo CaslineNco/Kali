@@ -5,7 +5,8 @@ import { Dialog, KindToggle } from '@/components/ui/Dialog';
 import { DurationDial, TimeSteppers } from '@/components/ui/DurationDial';
 import { blocks } from '@/data/store';
 import type { BlockKind, Step, TimeBlock } from '@/data/types';
-import { fmtDateShort, fmtHm, fromKey, type DayKey } from '@/lib/date';
+import { fmtHm, fromKey, type DayKey } from '@/lib/date';
+import { fmtDateShort, useT } from '@/lib/i18n';
 import { StepsEditor } from './StepsEditor';
 
 export interface NewBlockDraft {
@@ -33,8 +34,9 @@ export function NewBlockDialog({
   onClose: () => void;
   onDelete?: (b: TimeBlock) => void;
 }) {
+  const { t } = useT();
   return (
-    <Dialog open={draft !== null} onClose={onClose} title={draft?.existing ? 'Edit block' : 'New block'}>
+    <Dialog open={draft !== null} onClose={onClose} title={draft?.existing ? t.editBlock : t.newBlock}>
       {/* 表单随浮层一起挂载/卸载，每次打开都是干净的初始值 */}
       {draft && <NewBlockForm draft={draft} others={others} onClose={onClose} onDelete={onDelete} />}
     </Dialog>
@@ -52,6 +54,7 @@ function NewBlockForm({
   onClose: () => void;
   onDelete?: (b: TimeBlock) => void;
 }) {
+  const { t, locale } = useT();
   const ex = draft.existing;
   const snap = (v: number) => Math.round(v / STEP) * STEP;
   // 新建才吸附到 5 分钟；编辑保留原值，免得只改个备注就把块挪了
@@ -90,9 +93,9 @@ function NewBlockForm({
   };
 
   const warning = !valid
-    ? 'Runs past midnight — start earlier or shorten it.'
+    ? t.pastMidnight
     : clash
-      ? `Overlaps “${clash.note || (clash.kind === 'focus' ? 'Focus' : 'Leisure')} ${fmtHm(clash.startMin!)}–${fmtHm(clash.endMin!)}” — adjust the time.`
+      ? t.overlaps(clash.note || (clash.kind === 'focus' ? t.focus : t.leisure), `${fmtHm(clash.startMin!)}–${fmtHm(clash.endMin!)}`)
       : null;
 
   return (
@@ -104,19 +107,19 @@ function NewBlockForm({
       }}
     >
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">{fmtDateShort(fromKey(draft.date))}</span>
+        <span className="text-xs text-muted-foreground">{fmtDateShort(fromKey(draft.date), locale)}</span>
         <KindToggle value={kind} onChange={setKind} />
       </div>
-      <TimeSteppers label="Start" value={start} step={STEP} onChange={setStart} />
+      <TimeSteppers label={t.start} value={start} step={STEP} onChange={setStart} />
       <DurationDial value={duration} max={DIAL_MAX} step={STEP} size={176} onChange={setDuration} />
       <div className="flex items-baseline gap-2.5">
-        <span className="text-xs text-muted-foreground">Ends</span>
+        <span className="text-xs text-muted-foreground">{t.ends}</span>
         <span className="text-lg font-semibold tabular-nums text-foreground">{fmtHm(Math.min(end, DAY_END))}</span>
       </div>
       {warning && <p className="text-xs text-destructive">{warning}</p>}
-      <Input label="What (optional)" placeholder="e.g. Write the proposal" value={note} onChange={setNote} maxLength={80} />
+      <Input label={t.what} placeholder={t.whatPlaceholder} value={note} onChange={setNote} maxLength={80} />
       <StepsEditor steps={steps} onChange={setSteps} />
-      {!ex && <p className="text-xs text-muted-foreground">Saved as planned — you’ll be asked to confirm when it ends.</p>}
+      {!ex && <p className="text-xs text-muted-foreground">{t.savedAsPlanned}</p>}
       <div className="flex items-center gap-2 pt-1">
         {ex && onDelete && (
           <Button
@@ -129,15 +132,15 @@ function NewBlockForm({
               onClose();
             }}
           >
-            Delete
+            {t.delete}
           </Button>
         )}
         <span className="flex-1" />
         <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-          Cancel
+          {t.cancel}
         </Button>
         <Button type="submit" variant="primary" size="sm" disabled={!valid || !!clash || saving}>
-          Save
+          {t.save}
         </Button>
       </div>
     </form>

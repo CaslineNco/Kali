@@ -4,7 +4,10 @@ import { disable, enable, isEnabled } from '@tauri-apps/plugin-autostart';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/motion/button/base';
 import { Switch } from '@/components/motion/switch';
+import { Tabs, TabsList, TabsTrigger } from '@/components/motion/tabs';
 import { Dialog } from '@/components/ui/Dialog';
+import { settings } from '@/data/store';
+import { LOCALE_SETTING, useT, type Locale } from '@/lib/i18n';
 
 const inTauri = () => '__TAURI_INTERNALS__' in window;
 
@@ -13,14 +16,16 @@ const inTauri = () => '__TAURI_INTERNALS__' in window;
  * 阶段 7 再加颜色阈值、悬浮窗透明度、数据路径。
  */
 export function SettingsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { t } = useT();
   return (
-    <Dialog open={open} onClose={onClose} title="Settings" width={420}>
+    <Dialog open={open} onClose={onClose} title={t.settings} width={420}>
       {open && <SettingsForm onClose={onClose} />}
     </Dialog>
   );
 }
 
 function SettingsForm({ onClose }: { onClose: () => void }) {
+  const { t, locale } = useT();
   // 纯浏览器预览没有托盘和自启，直接给定值；Tauri 里异步读真实状态
   const [autostart, setAutostart] = useState<boolean | null>(() => (inTauri() ? null : false));
   const [widget, setWidget] = useState<boolean | null>(() => (inTauri() ? null : true));
@@ -48,7 +53,7 @@ function SettingsForm({ onClose }: { onClose: () => void }) {
       if (inTauri()) await (want ? enable() : disable());
       setAutostart(want);
     } catch (e) {
-      setError(`Couldn’t change launch at login: ${e instanceof Error ? e.message : String(e)}`);
+      setError(t.autostartError(e instanceof Error ? e.message : String(e)));
     }
   };
 
@@ -62,25 +67,37 @@ function SettingsForm({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="flex flex-col gap-2">
+      <div className="flex min-h-11 items-center justify-between gap-4">
+        <span className="flex flex-col">
+          <span className="text-sm text-foreground">{t.language}</span>
+          <span className="text-xs text-muted-foreground">{t.languageHint}</span>
+        </span>
+        <Tabs value={locale} onValueChange={(v) => void settings.set(LOCALE_SETTING, v as Locale)} variant="segment">
+          <TabsList>
+            <TabsTrigger value="en">English</TabsTrigger>
+            <TabsTrigger value="zh-TW">繁體中文</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
       <Row
-        label="Launch at login"
-        hint="Off by default. Kali starts in the tray with the widget on screen."
+        label={t.launchAtLogin}
+        hint={t.launchHint}
         checked={autostart ?? false}
         disabled={autostart === null}
         onChange={(v) => void toggleAutostart(v)}
       />
       <Row
-        label="Show today widget"
-        hint="The always-on-top card. Also in the tray menu."
+        label={t.showWidget}
+        hint={t.showWidgetHint}
         checked={widget ?? true}
         disabled={widget === null}
         onChange={(v) => void toggleWidget(v)}
       />
       {error && <p className="text-xs text-destructive">{error}</p>}
-      <p className="pt-2 text-xs text-muted-foreground">Color thresholds, widget opacity and the data location come in a later stage.</p>
+      <p className="pt-2 text-xs text-muted-foreground">{t.settingsLater}</p>
       <div className="flex justify-end pt-2">
         <Button type="button" variant="ghost" size="sm" onClick={onClose}>
-          Close
+          {t.close}
         </Button>
       </div>
     </div>

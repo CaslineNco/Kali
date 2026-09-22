@@ -143,6 +143,9 @@ Windows 桌面 App，Tauri + React。把一年的「专注」时间画成 GitHub
 - **无边框主窗口 + 悬浮窗收边**（2026-09-20，用户参考 Obsidian）：
   - 主窗口 `decorations: false`，自绘标题栏 `components/TitleBar.tsx`（36px，App 同色，不跟 Windows 强调色；整条可拖、双击最大化、右侧最小化/最大化/关闭，关闭走 Rust 的 CloseRequested → 隐藏到托盘）。窗口边缘仍可拉伸（wry 自带）。
   - 悬浮窗收边 `float/useDock.ts`：平时把窗口推到屏幕右缘外只露 28px 把手（竖排 "Today · 2 left · 20:16"）；**有事**（正在进行 / 到点待确认 / 10 分钟内要开始）或鼠标碰把手 → 弹出；没事 + 鼠标离开 4 秒 → 收回。头部有 📌 钉住按钮，钉住就不收。位置按 `currentMonitor()` 算，垂直居中。已在真实窗口验证（GetWindowRect：x = 屏宽 − 28）。
+- **悬浮窗收边已删除**（2026-09-22，用户要求跳过）：`useDock.ts` 删掉，FloatWindow 回到 fb93b8e 的版本；自绘标题栏保留。
+- **语言切换**（2026-09-22）：`lib/i18n.ts` 一张文案表（`en` / `zh-TW`），`useT()` 取当前语言 + 文案；语言存 settings 表 `locale`，主窗口/悬浮窗通过 `kali:setting-changed` 事件同步。设置页里 Tabs 切「English / 繁體中文」。日期格式按语言（`fmtDateTitle/fmtDateShort/fmtMonthDay` 现在在 i18n.ts 里带 locale 参数），Heat Calendar 加了 `locale` / `labels` prop。字体：`@fontsource-variable/noto-sans-tc` 排在 Geist 后面兜底——拉丁字母和数字仍是 Geist，中文走 Noto Sans TC。
+- **Obsidian Git 自动上传**（2026-09-22）：vault 根是 `E:\Obsidian Vaults\Wekap\Vekap`（不是 git 仓库）；git 仓库在 `calender/`（远端 github.com/CaslineNco/Kali）。插件配置 `.obsidian/plugins/obsidian-git/data.json`：`basePath: "calender"`，每 10 分钟自动 commit + pull + push，启动时 pull，不弹窗。凭据走 `gh auth setup-git`（GitHub CLI 已登录 CaslineNco）。`silt knockoff/` 不在仓库里、不会上传。
   - 下一步：**阶段 7** 设置页（颜色阈值、悬浮窗透明度、数据路径）→ 日历导入（ICS 订阅 / 文件）→ 阶段 8 缩放转场 → 阶段 9 本周固定安排 → 阶段 10 打磨。
 
 ## 接下来：分阶段实施计划

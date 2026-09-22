@@ -22,6 +22,10 @@ export interface HeatCalendarProps {
   today?: Date;
   /** 早于它的格子不画（用来把上一年末尾的几天留白）。 */
   minDate?: Date;
+  /** 月份/日期标签的语言（BCP 47），默认 en-US */
+  locale?: string;
+  /** 图例文字 */
+  labels?: { upcoming: string; less: string; more: string };
   /** The single hue. Any CSS color; magnitude maps to its strength, never to a second color. */
   color?: string;
   className?: string;

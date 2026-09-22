@@ -10,6 +10,7 @@ import {
 import { addDays, mondayOf } from '@/components/charts/heat-calendar/utils';
 import type { DaySummary } from '@/data/types';
 import { fmtMinutes, type DayKey } from '@/lib/date';
+import { intlTag, useT } from '@/lib/i18n';
 import { DEFAULT_THRESHOLDS, levelOf } from '@/lib/levels';
 
 /** Heat Calendar 内部按 UTC 日历日算；把本地的年月日原样搬到 UTC 上，两边就是同一个「日子」。 */
@@ -18,8 +19,6 @@ const utcDay = (y: number, m: number, d: number) => new Date(Date.UTC(y, m, d));
 const keyOfUtc = (d: Date): DayKey =>
   `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}-${String(d.getUTCDate()).padStart(2, '0')}`;
 
-const fmtDayEn = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
-const fmtShortEn = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
 
 export interface YearWallProps {
   year: number;
@@ -37,6 +36,10 @@ export interface YearWallProps {
  * 单击一格 → 进那天；按住拖过几格 → 选一段范围，tooltip 显示这段的专注总时长（Figma 线稿标注的交互）。
  */
 export function YearWall({ year, today, data, planned, thresholds = DEFAULT_THRESHOLDS, onSelectDay }: YearWallProps) {
+  const { t, locale } = useT();
+  const tag = intlTag(locale);
+  const fmtDayEn = useMemo(() => new Intl.DateTimeFormat(tag, { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' }), [tag]);
+  const fmtShortEn = useMemo(() => new Intl.DateTimeFormat(tag, { timeZone: 'UTC', month: 'short', day: 'numeric' }), [tag]);
   const endDate = useMemo(() => utcDay(year, 11, 31), [year]);
   const minDate = useMemo(() => utcDay(year, 0, 1), [year]);
   const todayUtc = useMemo(() => utcDay(today.getFullYear(), today.getMonth(), today.getDate()), [today]);
@@ -107,6 +110,8 @@ export function YearWall({ year, today, data, planned, thresholds = DEFAULT_THRE
       values={values}
       maxCount={4}
       unit=""
+      locale={tag}
+      labels={{ upcoming: t.legendUpcoming, less: t.legendLess, more: t.legendMore }}
       selection={selection}
       onSelectionChange={(sel) => {
         // 拖选过程中组件自己的 click 逻辑不作数
@@ -127,40 +132,40 @@ export function YearWall({ year, today, data, planned, thresholds = DEFAULT_THRE
       <div onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}>
         <HeatCalendarGrid>
           <HeatCalendarTooltip>
-            {(t) => {
-              if (t.days > 1 && t.startDate && t.endDate) {
+            {(tip) => {
+              if (tip.days > 1 && tip.startDate && tip.endDate) {
                 let focus = 0;
-                for (let d = t.startDate; d <= t.endDate; d = addDays(d, 1)) focus += data.get(keyOfUtc(d))?.focus ?? 0;
+                for (let d = tip.startDate; d <= tip.endDate; d = addDays(d, 1)) focus += data.get(keyOfUtc(d))?.focus ?? 0;
                 return (
                   <>
                     <span className="text-muted-foreground">
-                      {fmtShortEn.format(t.startDate)} – {fmtShortEn.format(t.endDate)} · {t.days} days
+                      {fmtShortEn.format(tip.startDate)} – {fmtShortEn.format(tip.endDate)} · {t.days(tip.days)}
                     </span>
                     <span className="font-mono tabular-nums" style={{ color: 'var(--amber)' }}>
-                      Focus {fmtMinutes(focus)}
+                      {t.focus} {fmtMinutes(focus)}
                     </span>
                   </>
                 );
               }
-              const key = keyOfUtc(t.date);
-              if (t.date > todayUtc) {
+              const key = keyOfUtc(tip.date);
+              if (tip.date > todayUtc) {
                 const n = planned?.get(key) ?? 0;
                 return (
                   <>
-                    <span className="text-muted-foreground">{fmtDayEn.format(t.date)}</span>
-                    <span>{n === 0 ? 'Nothing planned' : `${n} planned`}</span>
+                    <span className="text-muted-foreground">{fmtDayEn.format(tip.date)}</span>
+                    <span>{n === 0 ? t.nothingPlanned : t.nPlanned(n)}</span>
                   </>
                 );
               }
               const s = data.get(key);
               return (
                 <>
-                  <span className="text-muted-foreground">{fmtDayEn.format(t.date)}</span>
+                  <span className="text-muted-foreground">{fmtDayEn.format(tip.date)}</span>
                   <span className="font-mono tabular-nums" style={{ color: 'var(--amber)' }}>
-                    Focus {fmtMinutes(s?.focus ?? 0)}
+                    {t.focus} {fmtMinutes(s?.focus ?? 0)}
                   </span>
                   <span className="font-mono tabular-nums" style={{ color: 'var(--teal)' }}>
-                    Leisure {fmtMinutes(s?.fun ?? 0)}
+                    {t.leisure} {fmtMinutes(s?.fun ?? 0)}
                   </span>
                 </>
               );
